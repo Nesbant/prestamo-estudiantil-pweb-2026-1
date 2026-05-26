@@ -9,7 +9,7 @@ export default function Navbar() {
   const [activePage, setActivePage] = useState('explorar');
 
   return (
-    <nav className='mb-8 bg-white border-b border-gray-500 shadow-sm'>
+    <nav className='sticky top-0 z-40 mb-8 bg-white border-b border-gray-500 shadow-sm'>
       <div className='flex justify-between px-1 py-4 mx-10 max-w-8xl'>
         <div>
           <img
