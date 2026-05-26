@@ -3,13 +3,14 @@ import { faBell as faBellRegular } from '@fortawesome/free-regular-svg-icons';
 import { faUser as faUserSolid } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import logoUrl from './logo.svg';
+import NavButton from './NavButton';
 
 export default function Navbar() {
   const [activePage, setActivePage] = useState('explorar');
 
   return (
-    <nav className='bg-white border-b border-gray-500 shadow-sm mb-8'>
-      <div className='flex items-center justify-between max-w-6xl px-1 py-4 mx-auto'>
+    <nav className='mb-8 bg-white border-b border-gray-500 shadow-sm'>
+      <div className='flex justify-between px-1 py-4 mx-10 max-w-8xl'>
         <div>
           <img
             src={logoUrl}
@@ -18,18 +19,18 @@ export default function Navbar() {
           />
         </div>
         <div className='flex gap-8 font-medium text-gray-600'>
-          <button
+          <NavButton
+            isActive={activePage === 'explorar'}
             onClick={() => setActivePage('explorar')}
-            className={`transition-colors cursor-pointer underline-offset-8 decoration-2 ${activePage === 'explorar' ? 'text-[#00543D] underline' : 'hover:text-gray-900'}`}
           >
             Explorar
-          </button>
-          <button
+          </NavButton>
+          <NavButton
+            isActive={activePage === 'actividad'}
             onClick={() => setActivePage('actividad')}
-            className={`transition-colors cursor-pointer underline-offset-8 decoration-2 ${activePage === 'actividad' ? 'text-[#00543D] underline' : 'hover:text-gray-900'}`}
           >
             Mi actividad
-          </button>
+          </NavButton>
         </div>
         <div className='flex items-center gap-6 text-xl text-gray-500'>
           <button className='transition-colors cursor-pointer hover:text-gray-900'>
