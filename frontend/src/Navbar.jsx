@@ -8,7 +8,7 @@ export default function Navbar() {
   const [activePage, setActivePage] = useState('explorar');
 
   return (
-    <nav className='bg-white border-b border-gray-500 shadow-sm'>
+    <nav className='bg-white border-b border-gray-500 shadow-sm mb-8'>
       <div className='flex items-center justify-between max-w-6xl px-1 py-4 mx-auto'>
         <div>
           <img
