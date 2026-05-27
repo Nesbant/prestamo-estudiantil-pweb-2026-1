@@ -9,11 +9,14 @@ export default function Modal({
   cancelText = 'Cancelar',
   icon,
   iconClassName = 'text-[#00543D]',
+  maxWidthClass = 'max-w-lg',
   children,
 }) {
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'>
-      <div className='flex flex-col items-center w-full max-w-lg p-8 text-center bg-white shadow-xl rounded-2xl'>
+      <div
+        className={`flex flex-col items-center w-full ${maxWidthClass} p-8 text-center bg-white shadow-xl rounded-2xl`}
+      >
         {icon && (
           <FontAwesomeIcon
             icon={icon}

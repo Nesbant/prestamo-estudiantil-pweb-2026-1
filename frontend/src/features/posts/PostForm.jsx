@@ -16,6 +16,7 @@ import { useAuth } from '../auth/AuthContext';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
+import Modal from '../../components/ui/Modal';
 
 export default function PostForm() {
   const { posts, handleAddPost, handleUpdatePost } = useContext(PostContext);
@@ -30,6 +31,7 @@ export default function PostForm() {
   const [description, setDescription] = useState('');
   const [loanDuration, setLoanDuration] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdPost, setCreatedPost] = useState(null);
 
@@ -45,11 +47,27 @@ export default function PostForm() {
         setDescription(postToEdit.description);
         setLoanDuration(postToEdit.loanDuration || '');
         setPickupLocation(postToEdit.pickupLocation || '');
+        setImageUrl(postToEdit.imageUrl || '');
       }
     }
   }, [id, posts, isEditing]);
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result); // Guarda la imagen en formato DataURL
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handlePublish = () => {
+    const finalImageUrl =
+      imageUrl ||
+      `https://placehold.co/200x200?text=${encodeURIComponent(category || 'Articulo')}`;
+
     if (isEditing) {
       const existingPost = posts.find((p) => p.id === Number(id));
       const updatedPost = {
@@ -60,6 +78,7 @@ export default function PostForm() {
         description: description || 'Sin descripción',
         loanDuration: loanDuration || 'A coordinar',
         pickupLocation: pickupLocation || 'A coordinar',
+        imageUrl: finalImageUrl,
       };
       handleUpdatePost(updatedPost);
       setCreatedPost(updatedPost);
@@ -72,7 +91,7 @@ export default function PostForm() {
         description: description || 'Sin descripción',
         loanDuration: loanDuration || 'A coordinar',
         pickupLocation: pickupLocation || 'A coordinar',
-        imageUrl: `https://placehold.co/200x200?text=${encodeURIComponent(category || 'Articulo')}`,
+        imageUrl: finalImageUrl,
         views: 0,
         isFavorite: false,
         timeAgo: 'hace un momento',
@@ -92,42 +111,38 @@ export default function PostForm() {
 
   if (isSuccess) {
     return (
-      <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'>
-        <div className='flex flex-col items-center w-full max-w-2xl p-8 text-center bg-white shadow-xl rounded-2xl'>
-          <FontAwesomeIcon
-            icon={faCheckCircle}
-            className='mb-4 text-6xl text-[#00543D]'
-          />
-          <h2 className='mb-2 text-3xl font-bold text-gray-800'>
-            {isEditing ? '¡Publicación Actualizada!' : '¡Publicación Creada!'}
-          </h2>
-          <p className='mb-6 text-gray-600'>
-            {isEditing
-              ? 'Los cambios en tu publicación se han guardado exitosamente.'
-              : 'Tu artículo ha sido publicado exitosamente en CampusLend. Ahora otros estudiantes de la comunidad podrán verlo e interactuar con tu publicación.'}
-          </p>
-
-          {/* Preview del post creado, bloqueado para clicks de edición para que solo se vea visualmente */}
-          <div className='w-full mb-8 text-left pointer-events-none opacity-90'>
-            <Post post={createdPost} isPreview={true} />
-          </div>
-
-          <div className='flex justify-center gap-4'>
-            <button
-              onClick={() => navigate(`/post/${createdPost.id}`)}
-              className='flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white transition-colors bg-[#00543D] rounded-lg cursor-pointer hover:bg-[#00402e]'
-            >
-              <FontAwesomeIcon icon={faEye} /> Ver mi publicación
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              className='flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-gray-700 transition-colors bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300'
-            >
-              <FontAwesomeIcon icon={faStore} /> Regresar a explorar
-            </button>
-          </div>
+      <Modal
+        icon={faCheckCircle}
+        titulo={
+          isEditing ? '¡Publicación Actualizada!' : '¡Publicación Creada!'
+        }
+        mensaje={
+          isEditing
+            ? 'Los cambios en tu publicación se han guardado exitosamente.'
+            : 'Tu artículo ha sido publicado exitosamente en CampusLend. Ahora otros estudiantes de la comunidad podrán verlo e interactuar con tu publicación.'
+        }
+        maxWidthClass='max-w-2xl'
+      >
+        {/* Preview del post creado, bloqueado para clicks de edición para que solo se vea visualmente */}
+        <div className='w-full mb-8 text-left pointer-events-none opacity-90'>
+          <Post post={createdPost} isPreview={true} />
         </div>
-      </div>
+
+        <div className='flex justify-center gap-4'>
+          <button
+            onClick={() => navigate(`/post/${createdPost.id}`)}
+            className='flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white transition-colors bg-[#00543D] rounded-lg cursor-pointer hover:bg-[#00402e]'
+          >
+            <FontAwesomeIcon icon={faEye} /> Ver mi publicación
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            className='flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-gray-700 transition-colors bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300'
+          >
+            <FontAwesomeIcon icon={faStore} /> Regresar a explorar
+          </button>
+        </div>
+      </Modal>
     );
   }
 
@@ -203,16 +218,32 @@ export default function PostForm() {
         <div className='mb-6'>
           <div className='flex items-center justify-between mb-2'>
             <label className='text-sm font-medium text-gray-700'>Fotos</label>
-            <span className='text-xs text-gray-500'>Opcional, máx 3</span>
+            <span className='text-xs text-gray-500'>Opcional</span>
           </div>
-          <div className='flex flex-col items-center justify-center p-8 transition-colors border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100'>
-            <FontAwesomeIcon
-              icon={faImage}
-              className='mb-2 text-3xl text-gray-400'
+          <div className='relative flex flex-col items-center justify-center overflow-hidden transition-colors border-2 border-gray-300 border-dashed rounded-lg cursor-pointer min-h-50 bg-gray-50 hover:bg-gray-100'>
+            <input
+              type='file'
+              accept='image/*'
+              onChange={handleImageUpload}
+              className='absolute inset-0 z-10 w-full h-full opacity-0 cursor-pointer'
             />
-            <span className='text-sm text-gray-500'>
-              Subir foto o arrastrar foto
-            </span>
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt='Vista previa'
+                className='absolute inset-0 object-cover w-full h-full'
+              />
+            ) : (
+              <>
+                <FontAwesomeIcon
+                  icon={faImage}
+                  className='mb-2 text-3xl text-gray-400'
+                />
+                <span className='text-sm text-gray-500'>
+                  Haz clic para subir o arrastra tu foto aquí
+                </span>
+              </>
+            )}
           </div>
         </div>
 
