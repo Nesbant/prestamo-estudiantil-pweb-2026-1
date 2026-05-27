@@ -7,8 +7,8 @@ export default function Auth() {
   const { authView } = useAuth();
 
   return (
-    <div className='min-h-screen bg-[#eef2ff] p-3'>
-      <div className='mx-auto mt-28 flex min-h-140 w-[92%] max-w-6xl overflow-hidden rounded-2xl bg-gray-50 shadow-xl max-md:mt-10 max-md:flex-col'>
+    <div className='flex items-center justify-center min-h-screen bg-[#eef2ff] p-4 sm:p-8'>
+      <div className='flex w-full max-w-6xl overflow-hidden shadow-xl min-h-150 max-h-[95vh] rounded-2xl bg-gray-50 max-md:flex-col max-md:max-h-none'>
         <div className='w-1/2 bg-[#00543D] text-white max-md:w-full'>
           <div className='flex h-full min-h-90 flex-col justify-between bg-linear-to-br from-[#00543D] to-[#003d2c] p-10'>
             <div className='flex items-center gap-2'>
@@ -39,8 +39,10 @@ export default function Auth() {
           </div>
         </div>
 
-        <div className='flex items-center justify-center w-1/2 p-12 max-md:w-full max-md:p-8'>
-          {authView === 'register' ? <Register /> : <Login />}
+        <div className='w-1/2 overflow-y-auto max-md:w-full max-md:overflow-visible'>
+          <div className='flex flex-col items-center justify-center min-h-full p-12 max-md:p-8'>
+            {authView === 'register' ? <Register /> : <Login />}
+          </div>
         </div>
       </div>
     </div>

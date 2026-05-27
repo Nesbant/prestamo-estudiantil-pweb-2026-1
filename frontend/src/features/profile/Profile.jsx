@@ -4,6 +4,7 @@ import { updateCurrentUser } from '../auth/userService';
 import { useAuth } from '../auth/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faImage } from '@fortawesome/free-solid-svg-icons';
+import Input from '../../components/ui/Input';
 
 export default function Profile() {
   const { currentUser, updateUser } = useAuth();
@@ -52,7 +53,7 @@ export default function Profile() {
   };
 
   return (
-    <main className='max-w-3xl px-6 pb-12 mx-auto'>
+    <main className='max-w-3xl px-6 pb-12 mx-auto mt-10'>
       <div className='p-8 bg-white shadow-md rounded-2xl'>
         <h1 className='mb-2 text-4xl font-semibold text-gray-800'>Mi Perfil</h1>
         <p className='mb-6 text-gray-500'>
@@ -90,28 +91,34 @@ export default function Profile() {
           <p>
             <strong>Correo institucional:</strong> {currentUser?.email}
           </p>
+          <p className='mt-2'>
+            <strong>Código de estudiante:</strong>{' '}
+            {currentUser?.studentId || 'No registrado'}
+          </p>
+          <p className='mt-2'>
+            <strong>Institución:</strong>{' '}
+            {currentUser?.institution || 'No registrado'}
+          </p>
+          <p className='mt-2'>
+            <strong>Carrera:</strong> {currentUser?.major || 'No registrado'}
+          </p>
+          <p className='mt-2'>
+            <strong>Sede:</strong> {currentUser?.campus || 'No registrado'}
+          </p>
         </div>
 
         <form onSubmit={saveChanges}>
-          <label className='block mb-2 font-semibold text-gray-700'>
-            Nombre completo
-          </label>
-          <input
-            type='text'
+          <Input
+            label='Nombre completo'
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className='mb-5 h-11 w-full rounded-md border border-gray-300 px-3 outline-none focus:border-[#00543D]'
           />
 
-          <label className='block mb-2 font-semibold text-gray-700'>
-            Teléfono
-          </label>
-          <input
-            type='text'
+          <Input
+            label='Teléfono'
             placeholder='Agrega tu teléfono'
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className='mb-6 h-11 w-full rounded-md border border-gray-300 px-3 outline-none focus:border-[#00543D]'
           />
 
           <label className='block mb-2 font-semibold text-gray-700'>

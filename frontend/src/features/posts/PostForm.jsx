@@ -13,6 +13,9 @@ import {
 import Post from './Post';
 import { PostContext } from './PostContext';
 import { useAuth } from '../auth/AuthContext';
+import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
+import Textarea from '../../components/ui/Textarea';
 
 export default function PostForm() {
   const { posts, handleAddPost, handleUpdatePost } = useContext(PostContext);
@@ -158,79 +161,42 @@ export default function PostForm() {
           </div>
         </div>
 
-        {/* Título */}
-        <div className='mb-4'>
-          <label className='block mb-2 text-sm font-medium text-gray-700'>
-            Título
-          </label>
-          <input
-            type='text'
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder='Ej. Calculadora Científica Casio'
-            className='w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00543D]/50'
-          />
-        </div>
+        <Input
+          label='Título'
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder='Ej. Calculadora Científica Casio'
+        />
 
-        {/* Categoría */}
-        <div className='mb-4'>
-          <label className='block mb-2 text-sm font-medium text-gray-700'>
-            Categoría
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className='w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00543D]/50'
-          >
-            <option value=''>Selecciona una categoría...</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label='Categoría'
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          options={categories}
+          placeholder='Selecciona una categoría...'
+        />
 
-        {/* Descripción */}
-        <div className='mb-4'>
-          <label className='block mb-2 text-sm font-medium text-gray-700'>
-            Descripción detallada
-          </label>
-          <textarea
-            rows='4'
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder='Describe el estado del artículo, condiciones del préstamo, etc.'
-            className='w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00543D]/50 resize-none'
-          ></textarea>
-        </div>
+        <Textarea
+          label='Descripción detallada'
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder='Describe el estado del artículo, condiciones del préstamo, etc.'
+        />
 
         {/* Campos Nuevos: Tiempo y Lugar */}
-        <div className='grid grid-cols-1 gap-4 mb-4 md:grid-cols-2'>
-          <div>
-            <label className='block mb-2 text-sm font-medium text-gray-700'>
-              Tiempo de préstamo inicial
-            </label>
-            <input
-              type='text'
-              value={loanDuration}
-              onChange={(e) => setLoanDuration(e.target.value)}
-              placeholder='Ej. 1 semana (negociable)'
-              className='w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00543D]/50'
-            />
-          </div>
-          <div>
-            <label className='block mb-2 text-sm font-medium text-gray-700'>
-              Lugar de referencia para recojo
-            </label>
-            <input
-              type='text'
-              value={pickupLocation}
-              onChange={(e) => setPickupLocation(e.target.value)}
-              placeholder='Ej. Biblioteca Central'
-              className='w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00543D]/50'
-            />
-          </div>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <Input
+            label='Tiempo de préstamo inicial'
+            value={loanDuration}
+            onChange={(e) => setLoanDuration(e.target.value)}
+            placeholder='Ej. 1 semana (negociable)'
+          />
+          <Input
+            label='Lugar de referencia para recojo'
+            value={pickupLocation}
+            onChange={(e) => setPickupLocation(e.target.value)}
+            placeholder='Ej. Biblioteca Central'
+          />
         </div>
 
         {/* Fotos */}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { loginUser } from './userService';
 import { useAuth } from './AuthContext';
+import Input from '../../components/ui/Input';
 
 export default function Login() {
   const { setAuthView, handleLogin } = useAuth();
@@ -47,38 +48,30 @@ export default function Login() {
         </div>
       )}
 
-      <label className='block mb-2 text-sm font-semibold text-gray-700'>
-        Correo electrónico institucional
-      </label>
-      <div className='px-3 mb-4 bg-white border border-gray-300 rounded-md'>
-        <input
-          type='email'
-          placeholder='jordan@university.edu'
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className='w-full outline-none h-11'
-        />
-      </div>
+      <Input
+        label='Correo electrónico institucional'
+        type='email'
+        placeholder='maria.garcia@universidad.edu.pe'
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
 
-      <label className='block mb-2 text-sm font-semibold text-gray-700'>
-        Contraseña
-      </label>
-      <div className='flex items-center px-3 mb-5 bg-white border border-gray-300 rounded-md'>
-        <input
-          type={showPassword ? 'text' : 'password'}
-          placeholder='********'
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className='w-full outline-none h-11'
-        />
-        <button
-          type='button'
-          onClick={() => setShowPassword(!showPassword)}
-          className='text-sm font-semibold text-[#00543D]'
-        >
-          {showPassword ? 'Ocultar' : 'Ver'}
-        </button>
-      </div>
+      <Input
+        label='Contraseña'
+        type={showPassword ? 'text' : 'password'}
+        placeholder='********'
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        icon={
+          <button
+            type='button'
+            onClick={() => setShowPassword(!showPassword)}
+            className='text-sm font-semibold text-[#00543D]'
+          >
+            {showPassword ? 'Ocultar' : 'Ver'}
+          </button>
+        }
+      />
 
       <button
         type='submit'
