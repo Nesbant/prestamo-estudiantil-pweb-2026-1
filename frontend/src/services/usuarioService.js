@@ -30,8 +30,8 @@ export const registrarUsuario = async (datosUsuario) => {
     id: Date.now(),
     nombre: datosUsuario.nombre.trim(),
     email: correoLimpio,
+    telefono: datosUsuario.telefono.trim(),
     password: datosUsuario.password,
-    telefono: "",
   };
 
   const nuevaLista = [...usuarios, nuevoUsuario];

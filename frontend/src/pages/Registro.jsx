@@ -5,6 +5,7 @@ import { registrarUsuario } from "../services/usuarioService";
 export default function Registro({ cambiarVista }) {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [error, setError] = useState("");
@@ -14,7 +15,7 @@ export default function Registro({ cambiarVista }) {
     e.preventDefault();
     setError("");
 
-    if (!nombre.trim() || !email.trim() || !password.trim()) {
+    if (!nombre.trim() || !email.trim() || !telefono.trim() || !password.trim()) {
       setError("Todos los campos son obligatorios");
       return;
     }
@@ -24,7 +25,7 @@ export default function Registro({ cambiarVista }) {
       return;
     }
 
-    const resultado = await registrarUsuario({ nombre, email, password });
+    const resultado = await registrarUsuario({ nombre, email, telefono, password });
 
     if (!resultado.ok) {
       setError(resultado.mensaje);
@@ -69,6 +70,17 @@ export default function Registro({ cambiarVista }) {
             placeholder="jordan@university.edu"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="h-11 w-full outline-none"
+          />
+        </div>
+
+        <label className="mb-2 block text-sm font-semibold text-gray-700">Teléfono</label>
+        <div className="mb-4 rounded-md border border-gray-300 bg-white px-3">
+          <input
+            type="text"
+            placeholder="987654321"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
             className="h-11 w-full outline-none"
           />
         </div>

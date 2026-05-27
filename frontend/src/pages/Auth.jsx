@@ -14,7 +14,6 @@ export default function Auth({ vista, cambiarVista, onLogin }) {
           <div className="flex h-full min-h-[360px] flex-col justify-between bg-gradient-to-br from-[#00543D] to-[#003d2c] p-10">
             <div className="flex items-center gap-2">
               <img src={logoUrl} alt="CampusLend" className="h-8 w-auto brightness-0 invert" />
-              <h2 className="text-xl font-semibold">CampusLend</h2>
             </div>
 
             <div>
