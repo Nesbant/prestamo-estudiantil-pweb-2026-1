@@ -11,13 +11,20 @@ import {
   faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
+import Modal from '../../components/ui/Modal';
 
-const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
+const Post = ({
+  post,
+  onToggleFavorite,
+  onDeletePost,
+  isPreview = false,
+  isMyPost = false,
+}) => {
   const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const isPrestando = post.status === 'prestando';
-  const isBuscando = post.status === 'buscando';
-  const isPrestadoActualmente = post.status === 'prestado_actualmente';
+  const isPrestando = post.status === 'lending';
+  const isBuscando = post.status === 'requesting';
+  const isPrestadoActualmente = post.status === 'lent';
 
   let borderColor = '';
   let badgeColor = '';
@@ -46,7 +53,7 @@ const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
         style={{ borderLeft: `5px solid ${borderColor}` }}
       >
         {/* Imagen del objeto */}
-        <div 
+        <div
           onClick={() => !isPreview && navigate(`/post/${post.id}`)}
           className={`w-24 h-24 mr-4 shrink-0 sm:w-32 sm:h-32 ${!isPreview ? 'cursor-pointer' : ''}`}
         >
@@ -85,7 +92,7 @@ const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
             </button>
           </div>
 
-          <h3 
+          <h3
             onClick={() => !isPreview && navigate(`/post/${post.id}`)}
             className={`text-xl font-bold text-gray-900 line-clamp-1 ${!isPreview ? 'cursor-pointer hover:text-[#00543D] hover:underline' : ''}`}
           >
@@ -117,11 +124,11 @@ const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
               )}
             </div>
 
-            {!isPreview && (
+            {!isPreview && isMyPost && (
               <div className='flex items-center gap-2'>
                 <button
                   disabled={isDisabled}
-                  onClick={() => navigate(`/editar/${post.id}`)}
+                  onClick={() => navigate(`/edit/${post.id}`)}
                   className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded transition-colors ${isDisabled ? 'text-gray-400 bg-gray-100 cursor-not-allowed' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}`}
                 >
                   <FontAwesomeIcon icon={faPen} /> Editar
@@ -141,41 +148,20 @@ const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
 
       {/* Modal de Confirmación de Eliminación */}
       {!isPreview && showDeleteConfirm && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'>
-          <div className='flex flex-col items-center w-full max-w-lg p-8 bg-white shadow-xl rounded-2xl'>
-            <FontAwesomeIcon
-              icon={faExclamationTriangle}
-              className='mb-4 text-5xl text-red-500'
-            />
-            <h3 className='mb-2 text-2xl font-bold text-gray-900'>
-              ¿Borrar Publicación?
-            </h3>
-            <p className='mb-6 text-center text-gray-600'>
-              ¿Estás seguro de que deseas eliminar esta publicación? Esta acción
-              es permanente y no se puede deshacer.
-            </p>
-
-            {/* Tarjeta de vista previa */}
-            <div className='w-full mb-8 text-left pointer-events-none opacity-90'>
-              <Post post={post} isPreview={true} />
-            </div>
-
-            <div className='flex justify-center w-full gap-4'>
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className='px-6 py-2.5 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 cursor-pointer'
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={onDeletePost}
-                className='px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 cursor-pointer'
-              >
-                Sí, eliminar
-              </button>
-            </div>
+        <Modal
+          titulo='¿Borrar Publicación?'
+          mensaje='¿Estás seguro de que deseas eliminar esta publicación? Esta acción es permanente y no se puede deshacer.'
+          icon={faExclamationTriangle}
+          iconClassName='text-red-500'
+          confirmText='Sí, eliminar'
+          onConfirm={onDeletePost}
+          onClose={() => setShowDeleteConfirm(false)}
+        >
+          {/* Tarjeta de vista previa */}
+          <div className='pointer-events-none opacity-90'>
+            <Post post={post} isPreview={true} />
           </div>
-        </div>
+        </Modal>
       )}
     </>
   );
