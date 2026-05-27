@@ -1,105 +1,94 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useState } from 'react';
-import Navbar from './Navbar';
-import Layout from './Layout';
-import PostForm from './PostForm';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useParams,
+} from 'react-router-dom';
+import Navbar from './components/layout/Navbar';
+import Home from './pages/Home';
+import PostForm from './features/posts/PostForm';
+import PostPage from './pages/PostDetails';
+import ExplorePage from './pages/Explore';
+import Profile from './features/profile/Profile';
+import Auth from './features/auth/Auth';
+import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/layout/ProtectedRoute';
+import { PostProvider } from './features/posts/PostContext';
+import { AuthProvider, useAuth } from './features/auth/AuthContext';
 
-export default function App() {
-  // Estado de publicaciones levantado a App para que no se pierda al navegar
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      status: 'prestando',
-      category: 'Tecnología',
-      title: 'Calculadora Científica Casio',
-      description:
-        'Calculadora en perfecto estado fx-991EX. Ideal para exámenes de cálculo y matrices.',
-      imageUrl: 'https://placehold.co/200x200?text=Calculadora',
-      views: 125,
-      isFavorite: false,
-    },
-    {
-      id: 2,
-      status: 'buscando',
-      category: 'Libros',
-      title: 'Física Universitaria Vol. 2',
-      description:
-        'Necesito el libro de Sears Zemansky, 14va edición. Lo cuidaré muy bien.',
-      imageUrl: 'https://placehold.co/200x200?text=Libro+Fisica',
-      timeAgo: 'hace 3 horas',
-      isFavorite: false,
-    },
-    {
-      id: 3,
-      status: 'prestado_actualmente',
-      category: 'Materiales',
-      title: 'Juego de Escuadras y Regla T',
-      description:
-        'Materiales de dibujo técnico, prestados por el ciclo actual.',
-      imageUrl: 'https://placehold.co/200x200?text=Escuadras',
-      returnDays: 14,
-      isFavorite: false,
-    },
-    {
-      id: 4,
-      status: 'prestando',
-      category: 'Ropa',
-      title: 'Bata de Laboratorio Talla M',
-      description:
-        'Bata blanca 100% algodón, limpia y planchada. Solo para laboratorios de química.',
-      imageUrl: 'https://placehold.co/200x200?text=Bata',
-      views: 42,
-      isFavorite: false,
-    },
-    {
-      id: 5,
-      status: 'buscando',
-      category: 'Tecnología',
-      title: 'Cargador de Laptop HP',
-      description:
-        'Busco un cargador de punta azul para HP Pavillion, el mío se malogró hoy.',
-      imageUrl: 'https://placehold.co/200x200?text=Cargador',
-      timeAgo: 'hace 1 día',
-      isFavorite: false,
-    },
-  ]);
+// Componente auxiliar para redirigir URLs dinámicas antiguas
+function RedirectEdit() {
+  const { id } = useParams();
+  return <Navigate to={`/edit/${id}`} replace />;
+}
 
-  const handleAddPost = (newPost) => {
-    setPosts([newPost, ...posts]); // Agrega el nuevo post al inicio
-  };
+function AppRoutes() {
+  const { currentUser, loading } = useAuth();
 
-  const handleDeletePost = (id) => {
-    setPosts(posts.filter((post) => post.id !== id));
-  };
+  if (loading) {
+    return <p className='p-8 text-center text-gray-600'>Cargando...</p>;
+  }
 
   return (
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route
-          path='/'
-          element={
-            <Layout
-              posts={posts}
-              setPosts={setPosts}
-              onDeletePost={handleDeletePost}
+    <PostProvider>
+      <BrowserRouter>
+        {/* Solo mostramos el Navbar si el usuario está logueado */}
+        {currentUser && <Navbar />}
+        <Routes>
+          {/* Ruta de Autenticación. Si ya estás logueado, te manda a '/' inmediatamente */}
+          <Route
+            path='/auth'
+            element={!currentUser ? <Auth /> : <Navigate to='/' replace />}
+          />
+
+          {/* Rutas Protegidas */}
+          <Route element={<ProtectedRoute />}>
+            {/* REDIRECCIONES DE RETROCOMPATIBILIDAD (Para evitar el error 404) */}
+            <Route path='explorar' element={<Navigate to='/' replace />} />
+            <Route
+              path='actividad'
+              element={<Navigate to='/activity' replace />}
             />
-          }
-        />
-        <Route
-          path='/crear'
-          element={
-            <>
-              <Layout
-                posts={posts}
-                setPosts={setPosts}
-                onDeletePost={handleDeletePost}
-              />
-              <PostForm onAddPost={handleAddPost} />
-            </>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+            <Route path='crear' element={<Navigate to='/create' replace />} />
+            <Route path='editar/:id' element={<RedirectEdit />} />
+
+            <Route index element={<ExplorePage />} />
+            <Route path='activity' element={<Home />} />
+            <Route
+              path='create'
+              element={
+                <>
+                  <Home />
+                  <PostForm />
+                </>
+              }
+            />
+            <Route
+              path='edit/:id'
+              element={
+                <>
+                  <Home />
+                  <PostForm />
+                </>
+              }
+            />
+            <Route path='post/:id' element={<PostPage />} />
+            <Route path='profile' element={<Profile />} />
+          </Route>
+
+          {/* Ruta 404 Not Found para enlaces rotos */}
+          <Route path='*' element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </PostProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
