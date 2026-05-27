@@ -3,6 +3,8 @@ import { useState } from 'react';
 import Navbar from './Navbar';
 import Layout from './Layout';
 import PostForm from './PostForm';
+import PostPage from './PostPage';
+import ExplorePage from './ExplorePage';
 
 export default function App() {
   // Estado de publicaciones levantado a App para que no se pierda al navegar
@@ -72,6 +74,12 @@ export default function App() {
     setPosts(posts.filter((post) => post.id !== id));
   };
 
+  const handleUpdatePost = (updatedPost) => {
+    setPosts(
+      posts.map((post) => (post.id === updatedPost.id ? updatedPost : post)),
+    );
+  };
+
   return (
     <BrowserRouter>
       <Navbar />
@@ -99,6 +107,24 @@ export default function App() {
             </>
           }
         />
+        <Route
+          path='/editar/:id'
+          element={
+            <>
+              <Layout
+                posts={posts}
+                setPosts={setPosts}
+                onDeletePost={handleDeletePost}
+              />
+              <PostForm posts={posts} onUpdatePost={handleUpdatePost} />
+            </>
+          }
+        />
+        <Route
+          path='/post/:id'
+          element={<PostPage posts={posts} setPosts={setPosts} />}
+        />
+        <Route path='/explorar' element={<ExplorePage />} />
       </Routes>
     </BrowserRouter>
   );

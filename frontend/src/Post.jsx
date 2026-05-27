@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye,
@@ -12,6 +13,7 @@ import {
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 
 const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
+  const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isPrestando = post.status === 'prestando';
   const isBuscando = post.status === 'buscando';
@@ -44,11 +46,14 @@ const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
         style={{ borderLeft: `5px solid ${borderColor}` }}
       >
         {/* Imagen del objeto */}
-        <div className='w-24 h-24 mr-4 shrink-0 sm:w-32 sm:h-32'>
+        <div 
+          onClick={() => !isPreview && navigate(`/post/${post.id}`)}
+          className={`w-24 h-24 mr-4 shrink-0 sm:w-32 sm:h-32 ${!isPreview ? 'cursor-pointer' : ''}`}
+        >
           <img
             src={post.imageUrl}
             alt={post.title}
-            className='object-cover w-full h-full rounded'
+            className={`object-cover w-full h-full rounded ${!isPreview ? 'transition-transform hover:opacity-90' : ''}`}
           />
         </div>
 
@@ -80,7 +85,10 @@ const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
             </button>
           </div>
 
-          <h3 className='text-xl font-bold text-gray-900 line-clamp-1'>
+          <h3 
+            onClick={() => !isPreview && navigate(`/post/${post.id}`)}
+            className={`text-xl font-bold text-gray-900 line-clamp-1 ${!isPreview ? 'cursor-pointer hover:text-[#00543D] hover:underline' : ''}`}
+          >
             {post.title}
           </h3>
           <p className='mb-4 text-sm text-gray-600 line-clamp-2'>
@@ -113,7 +121,7 @@ const Post = ({ post, onToggleFavorite, onDeletePost, isPreview = false }) => {
               <div className='flex items-center gap-2'>
                 <button
                   disabled={isDisabled}
-                  onClick={() => alert('Próximamente: Editar ' + post.title)}
+                  onClick={() => navigate(`/editar/${post.id}`)}
                   className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded transition-colors ${isDisabled ? 'text-gray-400 bg-gray-100 cursor-not-allowed' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}`}
                 >
                   <FontAwesomeIcon icon={faPen} /> Editar

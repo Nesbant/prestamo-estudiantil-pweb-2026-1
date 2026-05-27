@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { faBell as faBellRegular } from '@fortawesome/free-regular-svg-icons';
 import { faUser as faUserSolid } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,7 +6,15 @@ import logoUrl from './logo.svg';
 import NavButton from './NavButton';
 
 export default function Navbar() {
-  const [activePage, setActivePage] = useState('explorar');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Detectar la página activa según la ruta actual
+  const isExplorar = location.pathname === '/explorar';
+  const isActividad =
+    location.pathname === '/' ||
+    location.pathname === '/crear' ||
+    location.pathname.startsWith('/editar');
 
   return (
     <nav className='sticky top-0 z-40 mb-8 bg-white border-b border-gray-500 shadow-sm'>
@@ -20,15 +28,12 @@ export default function Navbar() {
         </div>
         <div className='flex gap-8 font-medium text-gray-600'>
           <NavButton
-            isActive={activePage === 'explorar'}
-            onClick={() => setActivePage('explorar')}
+            isActive={isExplorar}
+            onClick={() => navigate('/explorar')}
           >
             Explorar
           </NavButton>
-          <NavButton
-            isActive={activePage === 'actividad'}
-            onClick={() => setActivePage('actividad')}
-          >
+          <NavButton isActive={isActividad} onClick={() => navigate('/')}>
             Mi actividad
           </NavButton>
         </div>
