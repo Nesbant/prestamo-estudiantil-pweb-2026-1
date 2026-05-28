@@ -10,6 +10,7 @@ import Home from './pages/Home';
 import PostForm from './features/posts/PostForm';
 import PostPage from './pages/PostDetails';
 import ExplorePage from './pages/Explore';
+import ChatPage from './pages/ChatPage';
 import Profile from './features/profile/Profile';
 import Auth from './features/auth/Auth';
 import NotFound from './pages/NotFound';
@@ -74,6 +75,7 @@ function AppRoutes() {
               }
             />
             <Route path='post/:id' element={<PostPage />} />
+            <Route path='chat' element={<ChatPage />} />
             <Route path='profile' element={<Profile />} />
           </Route>
 
