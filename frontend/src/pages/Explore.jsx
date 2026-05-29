@@ -81,7 +81,7 @@ export default function ExplorePage() {
       {/* Barra de Búsqueda y Filtros */}
       <section className='flex flex-col gap-4 mb-8 md:flex-row'>
         {/* Búsqueda */}
-        <div className='relative flex-grow'>
+        <div className='relative grow'>
           <div className='absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none'>
             <FontAwesomeIcon icon={faSearch} className='text-gray-400' />
           </div>
