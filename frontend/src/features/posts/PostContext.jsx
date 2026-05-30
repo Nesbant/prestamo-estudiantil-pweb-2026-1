@@ -1,9 +1,18 @@
-import { createContext, useState } from 'react';
+import { createContext, useState, useEffect } from 'react';
 
 export const PostContext = createContext();
 
 export const PostProvider = ({ children }) => {
-  const [posts, setPosts] = useState([
+  const [posts, setPosts] = useState(() => {
+    const savedPosts = localStorage.getItem('campuslend_posts');
+    if (savedPosts) {
+      try {
+        return JSON.parse(savedPosts);
+      } catch (error) {
+        console.error('Error al cargar posts', error);
+      }
+    }
+    return [
     {
       id: 1,
       status: 'lending',
@@ -710,7 +719,12 @@ export const PostProvider = ({ children }) => {
       loanDuration: '1 día',
       pickupLocation: 'Pabellón A',
     },
-  ]);
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('campuslend_posts', JSON.stringify(posts));
+  }, [posts]);
 
   const handleAddPost = (newPost) => {
     setPosts([newPost, ...posts]);
