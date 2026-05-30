@@ -43,6 +43,8 @@ export const PostContext = createContext();
 
 export const PostProvider = ({ children }) => {
   const [posts, setPosts] = useState(() => {
+    localStorage.removeItem('campuslend_posts');
+
     const savedPosts = localStorage.getItem('campuslend_posts');
     if (savedPosts) {
       try {
