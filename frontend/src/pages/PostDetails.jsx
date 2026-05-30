@@ -79,9 +79,7 @@ export default function PostPage() {
 
   const handleRequestConfirm = () => {
     setPosts(
-      posts.map((p) =>
-        p.id === post.id ? { ...p, status: 'lent' } : p,
-      ),
+      posts.map((p) => (p.id === post.id ? { ...p, status: 'lent' } : p)),
     );
     setShowRequestModal(false);
     setShowSuccessModal(true);
@@ -89,9 +87,7 @@ export default function PostPage() {
 
   const handleOfferConfirm = () => {
     setPosts(
-      posts.map((p) =>
-        p.id === post.id ? { ...p, status: 'lent' } : p,
-      ),
+      posts.map((p) => (p.id === post.id ? { ...p, status: 'lent' } : p)),
     );
     setShowOfferModal(false);
     setShowSuccessModal(true);
@@ -266,7 +262,21 @@ export default function PostPage() {
                       No disponible actualmente
                     </button>
                   )}
-                  <button className='flex items-center justify-center w-full gap-2 py-3.5 font-semibold text-gray-700 transition-colors bg-white border border-gray-300 cursor-pointer rounded-xl hover:bg-gray-50'>
+                  <button
+                    onClick={() =>
+                      navigate('/chat', {
+                        state: {
+                          newContact: {
+                            id: post.authorId,
+                            name: post.authorName,
+                            avatar: post.authorAvatar,
+                            item: post.title,
+                          },
+                        },
+                      })
+                    }
+                    className='flex items-center justify-center w-full gap-2 py-3.5 font-semibold text-gray-700 transition-colors bg-white border border-gray-300 cursor-pointer rounded-xl hover:bg-gray-50'
+                  >
                     <FontAwesomeIcon icon={faCommentDots} /> Enviar mensaje
                   </button>
                 </>
