@@ -4,7 +4,7 @@ import { registerUser } from './userService';
 import { useAuth } from './AuthContext';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
-import { INSTITUTIONS_DATA, INSTITUTIONS } from '../../data/institutions';
+import { INSTITUTIONS_DATA, INSTITUTIONS } from '../../components/ui/institutions';
 
 export default function Register() {
   const { setAuthView } = useAuth();

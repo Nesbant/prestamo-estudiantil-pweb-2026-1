@@ -15,7 +15,7 @@ export default function ExplorePage() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
 
-  // Paginación a través de URL Params
+  // Paginación
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const postsPerPage = 12;
@@ -30,21 +30,18 @@ export default function ExplorePage() {
     );
   };
 
-  // Lógica combinada de búsqueda y filtros
+  // Búsqueda y filtros
   const filteredPosts = posts.filter((post) => {
     const matchesSearch = post.title
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesCategory =
       categoryFilter === '' || post.category === categoryFilter;
-    // Filtramos los que están "prestados actualmente" si no los queremos ver,
-    // o simplemente validamos el tipo exacto
     const matchesType = typeFilter === 'all' || post.status === typeFilter;
 
     return matchesSearch && matchesCategory && matchesType;
   });
 
-  // Lógica de paginación
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
   const paginatedPosts = filteredPosts.slice(
     (currentPage - 1) * postsPerPage,
@@ -63,7 +60,6 @@ export default function ExplorePage() {
     }
   }, [currentPage]);
 
-  // Resetea a la página 1 cuando el usuario busca o filtra algo nuevo
   const handleFilterChange = (setter) => (e) => {
     setter(e.target.value);
     setSearchParams({ page: 1 });
@@ -78,9 +74,8 @@ export default function ExplorePage() {
         </p>
       </section>
 
-      {/* Barra de Búsqueda y Filtros */}
+      {/* Búsqueda y filtros */}
       <section className='flex flex-col gap-4 mb-8 md:flex-row'>
-        {/* Búsqueda */}
         <div className='relative grow'>
           <div className='absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none'>
             <FontAwesomeIcon icon={faSearch} className='text-gray-400' />
@@ -94,7 +89,6 @@ export default function ExplorePage() {
           />
         </div>
 
-        {/* Filtros */}
         <div className='flex gap-4 pb-2 overflow-x-auto shrink-0 md:pb-0'>
           <select
             className='h-12 px-4 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#00543D] focus:ring-1 focus:ring-[#00543D] transition-colors text-gray-700 shadow-sm cursor-pointer'
@@ -120,7 +114,7 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      {/* Grilla de Resultados */}
+      {/* Resultados */}
       {paginatedPosts.length > 0 ? (
         <>
           <section className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
@@ -134,7 +128,6 @@ export default function ExplorePage() {
             ))}
           </section>
 
-          {/* Controles de Paginación */}
           {totalPages > 1 && (
             <div className='flex justify-center gap-2 mt-10 mb-12'>
               <button

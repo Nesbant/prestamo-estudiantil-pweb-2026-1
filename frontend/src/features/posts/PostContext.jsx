@@ -1,4 +1,43 @@
 import { createContext, useState, useEffect } from 'react';
+import arduino from '../../assets/arduino.JPG';
+import audifonosnoisecancelling from '../../assets/audifonosnoisecancelling.JPG';
+import batablancotallam from '../../assets/batablancotallam.JPG';
+import batalabazul from '../../assets/batalabazul.JPG';
+import block_watercolor_fabiano from '../../assets/block-watercolor-fabiano.jpg';
+import botasdeseguridad from '../../assets/botasdeseguridad.jpg';
+import calchp12cplatinum from '../../assets/calchp12cplatinum.JPG';
+import calculadoracasio from '../../assets/calculadoracasio.png';
+import candadolocker from '../../assets/candadolocker.JPG';
+import casaca_termica_negra from '../../assets/casaca-termica-negra.jpg';
+import cascoblanco from '../../assets/cascoblanco.JPG';
+import clabe_c_a_lightning from '../../assets/clabe-c-a-lightning.JPG';
+import codigocivilperuano from '../../assets/codigocivilperuano.JPG';
+import discoduro1tb from '../../assets/discoduro1tb.JPG';
+import fisica_serway from '../../assets/fisica-serway.JPG';
+import guantes_de_cuero from '../../assets/guantes-de-cuero.JPG';
+import implementossetdiseccion from '../../assets/implementossetdiseccion.JPG';
+import ipadair4applepencil from '../../assets/ipadair4applepencil.jpg';
+import lentesprotlab from '../../assets/lentesprotlab.JPG';
+import libroanatomia from '../../assets/libroanatomia.WEBP';
+import librocalculostewart from '../../assets/librocalculostewart.JPG';
+import libroeconomiamankiw from '../../assets/libroeconomiamankiw.JPG';
+import librofisicafreedman from '../../assets/librofisicafreedman.WEBP';
+import libroguiapmbok from '../../assets/libroguiapmbok.WEBP';
+import maqueta_adn_3d from '../../assets/maqueta-adn-3d.JPG';
+import monitor24_ from '../../assets/monitor24.avif';
+import mouselogitech from '../../assets/mouselogitech.JPG';
+import multimetro from '../../assets/multimetro.JPG';
+import pelotamikasa from '../../assets/pelotamikasa.JPG';
+import portalaptop from '../../assets/portalaptop.JPG';
+import protoboard from '../../assets/protoboard.JPG';
+import quimicachang from '../../assets/quimicachang.JPG';
+import raquetateniswilson from '../../assets/raquetateniswilson.JPG';
+import raspberrypi4 from '../../assets/raspberrypi4.JPG';
+import reglast from '../../assets/reglast.JPG';
+import ropa_equipo_futbol from '../../assets/ropa-equipo-futbol.jpg';
+import setaquarelaspinceles from '../../assets/setaquarelaspinceles.JPG';
+import tecladoraredragon from '../../assets/tecladoraredragon.jpg';
+import termostanley1l from '../../assets/termostanley1l.JPG';
 
 export const PostContext = createContext();
 
@@ -20,7 +59,7 @@ export const PostProvider = ({ children }) => {
       title: 'Calculadora Científica Casio',
       description:
         'Calculadora en perfecto estado fx-991EX. Ideal para exámenes de cálculo y matrices.',
-      imageUrl: 'https://placehold.co/200x200?text=Calculadora',
+      imageUrl: calculadoracasio,
       views: 125,
       isFavorite: false,
       timeAgo: 'hace 2 horas',
@@ -40,7 +79,7 @@ export const PostProvider = ({ children }) => {
       title: 'Física Universitaria Vol. 2',
       description:
         'Necesito el libro de Sears Zemansky, 14va edición. Lo cuidaré muy bien.',
-      imageUrl: 'https://placehold.co/200x200?text=Libro+Fisica',
+      imageUrl: librofisicafreedman,
       timeAgo: 'hace 3 horas',
       isFavorite: false,
       authorId: 102,
@@ -59,7 +98,7 @@ export const PostProvider = ({ children }) => {
       title: 'Juego de Escuadras y Regla T',
       description:
         'Materiales de dibujo técnico, prestados por el ciclo actual.',
-      imageUrl: 'https://placehold.co/200x200?text=Escuadras',
+      imageUrl: reglast,
       returnDays: 14,
       isFavorite: false,
       authorId: 103,
@@ -78,7 +117,7 @@ export const PostProvider = ({ children }) => {
       title: 'Bata de Laboratorio Talla M',
       description:
         'Bata blanca 100% algodón, limpia y planchada. Solo para laboratorios de química.',
-      imageUrl: 'https://placehold.co/200x200?text=Bata',
+      imageUrl: batablancotallam,
       views: 42,
       isFavorite: false,
       timeAgo: 'hace 5 horas',
@@ -98,7 +137,7 @@ export const PostProvider = ({ children }) => {
       title: 'Cargador de Laptop HP',
       description:
         'Busco un cargador de punta azul para HP Pavillion, el mío se malogró hoy.',
-      imageUrl: 'https://placehold.co/200x200?text=Cargador',
+      imageUrl: clabe_c_a_lightning,
       timeAgo: 'hace 1 día',
       isFavorite: false,
       authorId: 105,
@@ -116,7 +155,7 @@ export const PostProvider = ({ children }) => {
       category: 'Tecnología',
       title: 'Mouse Inalámbrico Logitech',
       description: 'Mouse en perfecto estado, incluye pila. Útil si olvidaste el tuyo.',
-      imageUrl: 'https://placehold.co/200x200?text=Mouse',
+      imageUrl: mouselogitech,
       views: 89,
       isFavorite: false,
       timeAgo: 'hace 6 horas',
@@ -134,7 +173,7 @@ export const PostProvider = ({ children }) => {
       category: 'Libros',
       title: 'Cálculo de Stewart 8va Ed.',
       description: 'Necesito el libro urgente para prepararme para el parcial.',
-      imageUrl: 'https://placehold.co/200x200?text=Stewart',
+      imageUrl: librocalculostewart,
       timeAgo: 'hace 1 hora',
       isFavorite: false,
       authorId: 107,
@@ -151,7 +190,7 @@ export const PostProvider = ({ children }) => {
       category: 'Materiales',
       title: 'Multímetro Digital',
       description: 'Multímetro Truper, incluye cables. Funciona al 100%.',
-      imageUrl: 'https://placehold.co/200x200?text=Multimetro',
+      imageUrl: multimetro,
       views: 34,
       isFavorite: false,
       timeAgo: 'hace 1 día',
@@ -169,7 +208,7 @@ export const PostProvider = ({ children }) => {
       category: 'Ropa',
       title: 'Zapatos de Seguridad Talla 40',
       description: 'Busco botines con punta de acero para la visita técnica del viernes.',
-      imageUrl: 'https://placehold.co/200x200?text=Zapatos+Acero',
+      imageUrl: botasdeseguridad,
       timeAgo: 'hace 2 días',
       isFavorite: false,
       authorId: 109,
@@ -186,7 +225,7 @@ export const PostProvider = ({ children }) => {
       category: 'Otros',
       title: 'Candado para Casillero',
       description: 'Candado mediano con llave extra.',
-      imageUrl: 'https://placehold.co/200x200?text=Candado',
+      imageUrl: candadolocker,
       returnDays: 2,
       isFavorite: false,
       authorId: 110,
@@ -203,7 +242,7 @@ export const PostProvider = ({ children }) => {
       category: 'Tecnología',
       title: 'iPad Air 4 + Apple Pencil',
       description: 'Presto mi iPad por un par de horas si necesitas tomar apuntes urgentes y te quedaste sin batería.',
-      imageUrl: 'https://placehold.co/200x200?text=iPad+Air',
+      imageUrl: ipadair4applepencil,
       views: 204,
       isFavorite: true,
       timeAgo: 'hace 20 min',
@@ -221,7 +260,7 @@ export const PostProvider = ({ children }) => {
       category: 'Libros',
       title: 'Macroeconomía - Mankiw',
       description: 'Alguien tiene la 10ma edición? La necesito para mi trabajo grupal.',
-      imageUrl: 'https://placehold.co/200x200?text=Mankiw',
+      imageUrl: libroeconomiamankiw,
       timeAgo: 'hace 4 horas',
       isFavorite: false,
       authorId: 112,
@@ -238,7 +277,7 @@ export const PostProvider = ({ children }) => {
       category: 'Materiales',
       title: 'Protoboard Grande de 4 buses',
       description: 'Ideal para proyectos de circuitos complejos.',
-      imageUrl: 'https://placehold.co/200x200?text=Protoboard',
+      imageUrl: protoboard,
       returnDays: 7,
       isFavorite: false,
       authorId: 108,
@@ -255,7 +294,7 @@ export const PostProvider = ({ children }) => {
       category: 'Ropa',
       title: 'Casco Blanco de Obra',
       description: 'Casco estándar certificado. Limpio y sin quiñes.',
-      imageUrl: 'https://placehold.co/200x200?text=Casco',
+      imageUrl: cascoblanco,
       views: 12,
       isFavorite: false,
       timeAgo: 'hace 2 días',
@@ -273,7 +312,7 @@ export const PostProvider = ({ children }) => {
       category: 'Otros',
       title: 'Balón de Vóley Mikasa',
       description: 'Buscamos una pelota para jugar un partido en las canchas de la universidad esta tarde.',
-      imageUrl: 'https://placehold.co/200x200?text=Balon',
+      imageUrl: pelotamikasa,
       timeAgo: 'hace 10 min',
       isFavorite: false,
       authorId: 114,
@@ -290,7 +329,7 @@ export const PostProvider = ({ children }) => {
       category: 'Tecnología',
       title: 'Teclado Mecánico Redragon',
       description: 'Switches azules. Muy cómodo si tienes que programar por varias horas en la biblio.',
-      imageUrl: 'https://placehold.co/200x200?text=Teclado',
+      imageUrl: tecladoraredragon,
       views: 145,
       isFavorite: false,
       timeAgo: 'hace 1 semana',
@@ -308,7 +347,7 @@ export const PostProvider = ({ children }) => {
       category: 'Libros',
       title: 'Atlas de Anatomía - Netter',
       description: 'La biblia de medicina. Cuidar mucho por favor.',
-      imageUrl: 'https://placehold.co/200x200?text=Netter',
+      imageUrl: libroanatomia,
       returnDays: 20,
       isFavorite: true,
       authorId: 116,
@@ -325,7 +364,7 @@ export const PostProvider = ({ children }) => {
       category: 'Materiales',
       title: 'Arduino Uno R3 original',
       description: 'Mi placa se quemó ayer y tengo presentación de tesis mañana. Ayuda por favor!',
-      imageUrl: 'https://placehold.co/200x200?text=Arduino',
+      imageUrl: arduino,
       timeAgo: 'hace 1 hora',
       isFavorite: false,
       authorId: 117,
@@ -342,7 +381,7 @@ export const PostProvider = ({ children }) => {
       category: 'Ropa',
       title: 'Lentes Protectores 3M',
       description: 'Lentes de policarbonato para laboratorios de química o mecánica. Sin rayones.',
-      imageUrl: 'https://placehold.co/200x200?text=Lentes',
+      imageUrl: lentesprotlab,
       views: 22,
       isFavorite: false,
       timeAgo: 'hace 3 días',
@@ -360,7 +399,7 @@ export const PostProvider = ({ children }) => {
       category: 'Otros',
       title: 'Calculadora Financiera HP',
       description: 'HP 12c Platinum. Ideal para finanzas corporativas.',
-      imageUrl: 'https://placehold.co/200x200?text=HP+12c',
+      imageUrl: calchp12cplatinum,
       returnDays: 4,
       isFavorite: false,
       authorId: 112,
@@ -377,7 +416,7 @@ export const PostProvider = ({ children }) => {
       category: 'Tecnología',
       title: 'Monitor Externo 24"',
       description: 'Busco un monitor para un evento en el patio central de la facultad.',
-      imageUrl: 'https://placehold.co/200x200?text=Monitor',
+      imageUrl: monitor24_,
       timeAgo: 'hace 5 horas',
       isFavorite: false,
       authorId: 114,
@@ -394,7 +433,7 @@ export const PostProvider = ({ children }) => {
       category: 'Libros',
       title: 'Guía PMBOK 6ta Edición',
       description: 'El libro está forrado y tiene algunos resaltados, pero todas las hojas están perfectas.',
-      imageUrl: 'https://placehold.co/200x200?text=PMBOK',
+      imageUrl: libroguiapmbok,
       views: 56,
       isFavorite: false,
       timeAgo: 'hace 2 semanas',
@@ -412,7 +451,7 @@ export const PostProvider = ({ children }) => {
       category: 'Materiales',
       title: 'Kit de Disección Acero Inox',
       description: 'Kit completo de 12 piezas. Se entrega esterilizado.',
-      imageUrl: 'https://placehold.co/200x200?text=Kit+Diseccion',
+      imageUrl: implementossetdiseccion,
       returnDays: 1,
       isFavorite: false,
       authorId: 116,
@@ -429,7 +468,7 @@ export const PostProvider = ({ children }) => {
       category: 'Ropa',
       title: 'Bata Azul de Laboratorio Talla M',
       description: 'Necesito una bata azul urgente para el lab de biología. Pago el alquiler si es necesario.',
-      imageUrl: 'https://placehold.co/200x200?text=Bata+Azul',
+      imageUrl: batalabazul,
       timeAgo: 'hace 30 min',
       isFavorite: false,
       authorId: 117,
@@ -446,7 +485,7 @@ export const PostProvider = ({ children }) => {
       category: 'Otros',
       title: 'Raqueta de Tenis Wilson',
       description: 'Presto mi raqueta los martes y jueves que no la uso.',
-      imageUrl: 'https://placehold.co/200x200?text=Raqueta',
+      imageUrl: raquetateniswilson,
       views: 78,
       isFavorite: false,
       timeAgo: 'hace 4 días',
@@ -464,7 +503,7 @@ export const PostProvider = ({ children }) => {
       category: 'Tecnología',
       title: 'Raspberry Pi 4',
       description: 'Busco Raspberry Pi para probar un script de Python. Solo la necesito un fin de semana.',
-      imageUrl: 'https://placehold.co/200x200?text=Raspberry',
+      imageUrl: raspberrypi4,
       timeAgo: 'hace 1 día',
       isFavorite: true,
       authorId: 106,
@@ -481,7 +520,7 @@ export const PostProvider = ({ children }) => {
       category: 'Libros',
       title: 'Código Civil Peruano Comentado',
       description: 'Tomo I y II. Edición 2022. Muy pesados, mejor si nos vemos en la facultad.',
-      imageUrl: 'https://placehold.co/200x200?text=Codigo+Civil',
+      imageUrl: codigocivilperuano,
       views: 11,
       isFavorite: false,
       timeAgo: 'hace 1 mes',
@@ -499,7 +538,7 @@ export const PostProvider = ({ children }) => {
       category: 'Materiales',
       title: 'Set de Pinceles y Acuarelas',
       description: 'Pinceles de detalle fino y acuarelas Winsor & Newton.',
-      imageUrl: 'https://placehold.co/200x200?text=Acuarelas',
+      imageUrl: setaquarelaspinceles,
       returnDays: 3,
       isFavorite: false,
       authorId: 103,
@@ -516,7 +555,7 @@ export const PostProvider = ({ children }) => {
       category: 'Ropa',
       title: 'Uniforme de Fútbol Talla L',
       description: 'Alguien que me preste una camiseta deportiva? Olvidé la mía y tengo partido oficial.',
-      imageUrl: 'https://placehold.co/200x200?text=Camiseta',
+      imageUrl: ropa_equipo_futbol,
       timeAgo: 'hace 2 horas',
       isFavorite: false,
       authorId: 107,
@@ -533,7 +572,7 @@ export const PostProvider = ({ children }) => {
       category: 'Otros',
       title: 'Termo Stanley 1L',
       description: 'Mantiene el café caliente todo el día. Ideal si te toca amanecida en la biblioteca.',
-      imageUrl: 'https://placehold.co/200x200?text=Termo',
+      imageUrl: termostanley1l,
       views: 93,
       isFavorite: false,
       timeAgo: 'hace 3 semanas',
@@ -551,7 +590,7 @@ export const PostProvider = ({ children }) => {
       category: 'Tecnología',
       title: 'Auriculares Sony c/ Cancelación',
       description: 'Presto audífonos WH-1000XM4. Solo para usarse dentro de la biblioteca.',
-      imageUrl: 'https://placehold.co/200x200?text=Auriculares',
+      imageUrl: audifonosnoisecancelling,
       returnDays: 1,
       isFavorite: true,
       authorId: 111,
@@ -568,7 +607,7 @@ export const PostProvider = ({ children }) => {
       category: 'Libros',
       title: 'Química - Raymond Chang',
       description: 'Alguien que ya haya pasado Química General 1 que me preste su libro?',
-      imageUrl: 'https://placehold.co/200x200?text=Chang',
+      imageUrl: quimicachang,
       timeAgo: 'hace 4 días',
       isFavorite: false,
       authorId: 102,
@@ -585,7 +624,7 @@ export const PostProvider = ({ children }) => {
       category: 'Materiales',
       title: 'Maqueta de ADN 3D',
       description: 'Maqueta desarmable en perfecto estado. Sirve para exposiciones.',
-      imageUrl: 'https://placehold.co/200x200?text=Maqueta+ADN',
+      imageUrl: maqueta_adn_3d,
       views: 31,
       isFavorite: false,
       timeAgo: 'hace 5 días',
@@ -603,7 +642,7 @@ export const PostProvider = ({ children }) => {
       category: 'Ropa',
       title: 'Guantes de Cuero para Soldar',
       description: 'Guantes de caña larga gruesos de seguridad industrial.',
-      imageUrl: 'https://placehold.co/200x200?text=Guantes',
+      imageUrl: guantes_de_cuero,
       returnDays: 1,
       isFavorite: false,
       authorId: 113,
@@ -620,7 +659,7 @@ export const PostProvider = ({ children }) => {
       category: 'Otros',
       title: 'Mochila Porta Laptop',
       description: 'El cierre de mi mochila se rompió. Alguien que me preste una mochila temporal?',
-      imageUrl: 'https://placehold.co/200x200?text=Mochila',
+      imageUrl: portalaptop,
       timeAgo: 'hace 6 horas',
       isFavorite: false,
       authorId: 105,
@@ -637,7 +676,7 @@ export const PostProvider = ({ children }) => {
       category: 'Tecnología',
       title: 'Cargador iPhone (Tipo C a Lightning)',
       description: 'Presto mi cargador original si estás en apuros dentro del campus.',
-      imageUrl: 'https://placehold.co/200x200?text=Cargador+iOS',
+      imageUrl: clabe_c_a_lightning,
       views: 412,
       isFavorite: false,
       timeAgo: 'hace 1 mes',
@@ -655,7 +694,7 @@ export const PostProvider = ({ children }) => {
       category: 'Libros',
       title: 'Física para Ciencias - Serway',
       description: 'Busco Volumen 1. Si está subrayado no hay problema.',
-      imageUrl: 'https://placehold.co/200x200?text=Serway',
+      imageUrl: fisica_serway,
       timeAgo: 'hace 1 semana',
       isFavorite: false,
       authorId: 107,
@@ -672,7 +711,7 @@ export const PostProvider = ({ children }) => {
       category: 'Materiales',
       title: 'Block Papel Fabriano A3 (x10 hojas)',
       description: 'Me sobraron 10 hojas de mi curso de dibujo. Las regalo/presto a quien las necesite.',
-      imageUrl: 'https://placehold.co/200x200?text=Papel+A3',
+      imageUrl: block_watercolor_fabiano,
       views: 67,
       isFavorite: false,
       timeAgo: 'hace 2 días',
@@ -690,7 +729,7 @@ export const PostProvider = ({ children }) => {
       category: 'Ropa',
       title: 'Chaqueta de Invierno Negra',
       description: 'Cortavientos muy abrigador. Ideal para los que se quedan estudiando de noche.',
-      imageUrl: 'https://placehold.co/200x200?text=Chaqueta',
+      imageUrl: casaca_termica_negra,
       returnDays: 2,
       isFavorite: false,
       authorId: 115,
@@ -707,7 +746,7 @@ export const PostProvider = ({ children }) => {
       category: 'Tecnología',
       title: 'Disco Duro Externo 1TB',
       description: 'Presto mi HDD si necesitas hacer un backup urgente de tu tesis.',
-      imageUrl: 'https://placehold.co/200x200?text=HDD+1TB',
+      imageUrl: discoduro1tb,
       views: 134,
       isFavorite: true,
       timeAgo: 'hace 3 semanas',
