@@ -7,6 +7,7 @@ export const contactosChatMock = [
     lastMessage: 'Si, nos vemos en la cafeteria.',
     time: '10:30 AM',
     unread: 0,
+    isMyPost: true,
   },
   {
     id: 2,

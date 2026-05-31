@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import ChatAcciones from '../components/chat/ChatAcciones';
 import ChatHeader from '../components/chat/ChatHeader';
 import ChatInput from '../components/chat/ChatInput';
 import ChatListaMensajes from '../components/chat/ChatListaMensajes';
 import ChatSidebar from '../components/chat/ChatSidebar';
+import { useAuth } from '../features/auth/AuthContext';
 import { contactosChatMock, mensajesChatMock } from '../mocks/chat';
 
 export default function ChatPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const messagesEndRef = useRef(null);
 
   const [activeChatId, setActiveChatId] = useState(1);
@@ -29,11 +32,25 @@ export default function ChatPage() {
     } else {
       setTempContact({
         ...incoming,
-        lastMessage: 'Escribe el primer mensaje...',
+        lastMessage: incoming.initialMessage || 'Escribe el primer mensaje...',
         time: 'Ahora',
         unread: 0,
       });
       setActiveChatId(incoming.id);
+
+      if (incoming.initialMessage) {
+        setMessages((previousMessages) => ({
+          ...previousMessages,
+          [incoming.id]: [
+            {
+              id: Date.now(),
+              sender: 'me',
+              text: incoming.initialMessage,
+              time: getCurrentTime(),
+            },
+          ],
+        }));
+      }
     }
 
     navigate(location.pathname, { replace: true, state: {} });
@@ -64,6 +81,45 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currentMessages]);
 
+  const getCurrentTime = () =>
+    new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const addMessage = (text) => {
+    const sentMessage = {
+      id: Date.now(),
+      sender: 'me',
+      text,
+      time: getCurrentTime(),
+    };
+
+    setMessages((previousMessages) => ({
+      ...previousMessages,
+      [activeChatId]: [
+        ...(previousMessages[activeChatId] || []),
+        sentMessage,
+      ],
+    }));
+
+    if (tempContact && activeChatId === tempContact.id) {
+      setContacts((previousContacts) => [
+        { ...tempContact, lastMessage: text },
+        ...previousContacts,
+      ]);
+      setTempContact(null);
+    } else {
+      setContacts((previousContacts) =>
+        previousContacts.map((contact) =>
+          contact.id === activeChatId
+            ? { ...contact, lastMessage: text }
+            : contact,
+        ),
+      );
+    }
+  };
+
   const handleSendMessage = (event) => {
     event.preventDefault();
 
@@ -74,10 +130,7 @@ export default function ChatPage() {
       id: Date.now(),
       sender: 'me',
       text: trimmedMessage,
-      time: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
+      time: getCurrentTime(),
     };
 
     setMessages((previousMessages) => ({
@@ -107,6 +160,27 @@ export default function ChatPage() {
     setNewMessage('');
   };
 
+  const handleSharePhone = () => {
+    const phone = currentUser?.phone?.trim();
+    addMessage(
+      phone
+        ? `Mi telefono es ${phone}.`
+        : 'Aun no tengo un telefono registrado en mi perfil.',
+    );
+  };
+
+  const handleConfirmReceived = () => {
+    addMessage(`Confirmo que recibi el articulo "${activeChat.item}".`);
+  };
+
+  const handleConfirmDelivery = () => {
+    addMessage(`Confirmo que entregue el articulo "${activeChat.item}".`);
+  };
+
+  const handleRejectLoan = () => {
+    addMessage(`No podre continuar con el prestamo de "${activeChat.item}".`);
+  };
+
   return (
     <main className='mx-auto flex h-[calc(100vh-80px)] w-full max-w-7xl flex-col px-4 py-6 md:px-8'>
       <div className='flex h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm'>
@@ -125,6 +199,13 @@ export default function ChatPage() {
               <ChatListaMensajes
                 messages={currentMessages}
                 messagesEndRef={messagesEndRef}
+              />
+              <ChatAcciones
+                isMyPost={activeChat.isMyPost}
+                onConfirmDelivery={handleConfirmDelivery}
+                onConfirmReceived={handleConfirmReceived}
+                onRejectLoan={handleRejectLoan}
+                onSharePhone={handleSharePhone}
               />
               <ChatInput
                 onChange={setNewMessage}
