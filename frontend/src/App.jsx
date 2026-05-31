@@ -1,72 +1,96 @@
-import { useEffect, useState } from "react";
-import Navbar from "./Navbar";
-import Layout from "./Layout";
-import Post from "./Post";
-import Auth from "./pages/Auth";
-import Perfil from "./pages/Perfil";
-import { cerrarSesion, obtenerUsuarioActual } from "./services/usuarioService";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useParams,
+} from 'react-router-dom';
+import Navbar from './components/layout/Navbar';
+import Home from './pages/Home';
+import PostForm from './features/posts/PostForm';
+import PostPage from './pages/PostDetails';
+import ExplorePage from './pages/Explore';
+import ChatPage from './pages/ChatPage';
+import Profile from './features/profile/Profile';
+import Auth from './features/auth/Auth';
+import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/layout/ProtectedRoute';
+import { PostProvider } from './features/posts/PostContext';
+import { AuthProvider, useAuth } from './features/auth/AuthContext';
 
-export default function App() {
-  const [usuarioActual, setUsuarioActual] = useState(null);
-  const [vistaAuth, setVistaAuth] = useState("registro");
-  const [paginaActiva, setPaginaActiva] = useState("explorar");
-  const [cargando, setCargando] = useState(true);
+// Componente auxiliar para redirigir URLs dinámicas antiguas
+function RedirectEdit() {
+  const { id } = useParams();
+  return <Navigate to={`/edit/${id}`} replace />;
+}
 
-  useEffect(() => {
-    const verificarSesion = async () => {
-      const usuario = await obtenerUsuarioActual();
-      setUsuarioActual(usuario);
-      setCargando(false);
-    };
+function AppRoutes() {
+  const { currentUser, loading } = useAuth();
 
-    verificarSesion();
-  }, []);
-
-  const manejarLogin = (usuario) => {
-    setUsuarioActual(usuario);
-    setPaginaActiva("explorar");
-  };
-
-  const manejarCerrarSesion = async () => {
-    await cerrarSesion();
-    setUsuarioActual(null);
-    setVistaAuth("login");
-  };
-
-  const actualizarUsuario = (usuarioActualizado) => {
-    setUsuarioActual(usuarioActualizado);
-  };
-
-  if (cargando) {
-    return <p className="p-8 text-gray-600">Cargando...</p>;
-  }
-
-  if (!usuarioActual) {
-    return (
-      <Auth
-        vista={vistaAuth}
-        cambiarVista={setVistaAuth}
-        onLogin={manejarLogin}
-      />
-    );
+  if (loading) {
+    return <p className='p-8 text-center text-gray-600'>Cargando...</p>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar
-        paginaActiva={paginaActiva}
-        cambiarPagina={setPaginaActiva}
-        cerrarSesion={manejarCerrarSesion}
-      />
+    <PostProvider>
+      <BrowserRouter>
+        {/* Solo mostramos el Navbar si el usuario está logueado */}
+        {currentUser && <Navbar />}
+        <Routes>
+          {/* Ruta de Autenticación. Si ya estás logueado, te manda a '/' inmediatamente */}
+          <Route
+            path='/auth'
+            element={!currentUser ? <Auth /> : <Navigate to='/' replace />}
+          />
 
-      {paginaActiva === "explorar" && <Post />}
-      {paginaActiva === "actividad" && <Layout />}
-      {paginaActiva === "perfil" && (
-        <Perfil
-          usuarioLogueado={usuarioActual}
-          actualizarUsuario={actualizarUsuario}
-        />
-      )}
-    </div>
+          {/* Rutas Protegidas */}
+          <Route element={<ProtectedRoute />}>
+            {/* REDIRECCIONES DE RETROCOMPATIBILIDAD (Para evitar el error 404) */}
+            <Route path='explorar' element={<Navigate to='/' replace />} />
+            <Route
+              path='actividad'
+              element={<Navigate to='/activity' replace />}
+            />
+            <Route path='crear' element={<Navigate to='/create' replace />} />
+            <Route path='editar/:id' element={<RedirectEdit />} />
+
+            <Route index element={<ExplorePage />} />
+            <Route path='activity' element={<Home />} />
+            <Route
+              path='create'
+              element={
+                <>
+                  <Home />
+                  <PostForm />
+                </>
+              }
+            />
+            <Route
+              path='edit/:id'
+              element={
+                <>
+                  <Home />
+                  <PostForm />
+                </>
+              }
+            />
+            <Route path='post/:id' element={<PostPage />} />
+            <Route path='chat' element={<ChatPage />} />
+            <Route path='profile' element={<Profile />} />
+          </Route>
+
+          {/* Ruta 404 Not Found para enlaces rotos */}
+          <Route path='*' element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </PostProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
