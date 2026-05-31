@@ -1,22 +1,18 @@
-function ChatListaMensajes({ messages }) {
+import ChatMensaje from './ChatMensaje';
+
+function ChatListaMensajes({ messages, messagesEndRef }) {
   return (
-    <div className='flex-1 space-y-3 overflow-y-auto bg-gray-50 px-5 py-6'>
-      {messages.map((msg) => (
-        <div
-          className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          key={msg.id}
-        >
-          <p
-            className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm leading-relaxed shadow-sm ${
-              msg.sender === 'user'
-                ? 'bg-[#00543D] text-white'
-                : 'bg-white text-gray-700 border border-gray-200'
-            }`}
-          >
-            {msg.text}
-          </p>
+    <div className='flex-1 space-y-4 overflow-y-auto bg-[#F9FAFB] p-4'>
+      {messages.length === 0 ? (
+        <div className='flex h-full items-center justify-center text-sm text-gray-500'>
+          Envía un mensaje para comenzar a conversar.
         </div>
-      ))}
+      ) : (
+        messages.map((message) => (
+          <ChatMensaje key={message.id} message={message} />
+        ))
+      )}
+      <div ref={messagesEndRef} />
     </div>
   );
 }

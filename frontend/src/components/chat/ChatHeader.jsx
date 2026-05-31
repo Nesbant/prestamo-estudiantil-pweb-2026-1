@@ -1,24 +1,31 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+
 function ChatHeader({ chat }) {
   return (
-    <header className='flex items-center justify-between gap-4 border-b border-gray-200 px-5 py-4'>
+    <header className='flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 bg-white p-4'>
       <div className='flex min-w-0 items-center gap-3'>
-        <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-100 text-base font-semibold text-[#00543D]'>
-          {chat.name.charAt(0)}
-        </span>
+        <img
+          alt={chat.name}
+          className='h-10 w-10 rounded-full object-cover'
+          src={chat.avatar}
+        />
         <div className='min-w-0'>
-          <h2 className='truncate text-lg font-semibold text-gray-800'>
+          <h2 className='truncate font-semibold text-gray-800'>
             {chat.name}
           </h2>
-          <p className='truncate text-sm text-gray-500'>{chat.publicacion}</p>
+          <p className='truncate text-xs font-medium text-[#00543D]'>
+            Ref: {chat.item}
+          </p>
         </div>
       </div>
 
       <button
-        className='rounded-lg bg-[#00543D] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#004330]'
-        onClick={() => console.log('Compartir mi telefono')}
+        aria-label='Ver información del chat'
+        className='text-gray-400 transition-colors hover:text-gray-600'
         type='button'
       >
-        Compartir mi telefono
+        <FontAwesomeIcon icon={faInfoCircle} className='text-xl' />
       </button>
     </header>
   );
