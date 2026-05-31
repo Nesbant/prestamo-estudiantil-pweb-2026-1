@@ -1,7 +1,7 @@
 import NavButton from '../components/ui/NavButton';
 import Stat from '../components/ui/Stat';
 import Post from '../features/posts/Post';
-import { useState, useContext, useEffect, useRef } from 'react';
+import { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   faListCheck,
@@ -14,6 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { PostContext } from '../features/posts/PostContext';
 import { useAuth } from '../features/auth/AuthContext';
 import EmptyState from '../components/ui/EmptyState';
+import Pagination from '../components/ui/Pagination';
 
 export default function Home() {
   const { posts, setPosts, handleDeletePost } = useContext(PostContext);
@@ -37,19 +38,37 @@ export default function Home() {
   };
 
   // Filtrar solo las publicaciones del usuario actual
-  const myPosts = posts.filter((p) => p.authorId === currentUser?.id);
+  const myPosts = useMemo(
+    () => posts.filter((p) => p.authorId === currentUser?.id),
+    [posts, currentUser?.id],
+  );
 
   // Cálculos dinámicos para las estadísticas
-  const countPrestando = myPosts.filter((p) => p.status === 'lending').length;
-  const countBuscando = myPosts.filter((p) => p.status === 'requesting').length;
-  const countPrestado = myPosts.filter((p) => p.status === 'lent').length;
-  const countFavoritos = myPosts.filter((p) => p.isFavorite).length;
+  const stats = useMemo(() => {
+    return myPosts.reduce(
+      (acc, post) => {
+        if (post.status === 'lending') acc.countPrestando++;
+        if (post.status === 'requesting') acc.countBuscando++;
+        if (post.status === 'lent') acc.countPrestado++;
+        if (post.isFavorite) acc.countFavoritos++;
+        return acc;
+      },
+      {
+        countPrestando: 0,
+        countBuscando: 0,
+        countPrestado: 0,
+        countFavoritos: 0,
+      },
+    );
+  }, [myPosts]);
 
   const navigate = useNavigate();
 
-  const filteredPosts = myPosts.filter(
-    (post) => activeTab === 'all' || post.status === activeTab,
-  );
+  const filteredPosts = useMemo(() => {
+    return myPosts.filter(
+      (post) => activeTab === 'all' || post.status === activeTab,
+    );
+  }, [myPosts, activeTab]);
 
   // Lógica de paginación
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
@@ -94,28 +113,28 @@ export default function Home() {
       <section className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
         <Stat
           title='Ofrecidos'
-          total={countPrestando}
+          total={stats.countPrestando}
           description='Artículos disponibles'
           color='#00543D'
           icon={faListCheck}
         />
         <Stat
           title='Buscados'
-          total={countBuscando}
+          total={stats.countBuscando}
           description='Artículos solicitados'
           color='#EAB308'
           icon={faClipboardList}
         />
         <Stat
           title='Prestados'
-          total={countPrestado}
+          total={stats.countPrestado}
           description='En posesión de otros'
           color='#3B82F6'
           icon={faSquareCheck}
         />
         <Stat
           title='Favoritos'
-          total={countFavoritos}
+          total={stats.countFavoritos}
           description='Guardados para después'
           color='#EF4444'
           icon={faStar}
@@ -164,27 +183,11 @@ export default function Home() {
           </section>
 
           {/* Controles de Paginación */}
-          {totalPages > 1 && (
-            <div className='flex justify-center gap-2 mt-10 mb-12'>
-              <button
-                disabled={currentPage === 1}
-                onClick={() => handlePageChange(currentPage - 1)}
-                className='px-4 py-2 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-              >
-                Anterior
-              </button>
-              <span className='flex items-center px-4 font-medium text-gray-700'>
-                Página {currentPage} de {totalPages}
-              </span>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => handlePageChange(currentPage + 1)}
-                className='px-4 py-2 font-medium text-gray-700 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </>
       ) : (
         <EmptyState
