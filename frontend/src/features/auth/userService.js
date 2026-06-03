@@ -27,12 +27,16 @@ export const registerUser = async (userData) => {
   }
 
   const newUser = {
-    id: Date.now(),
-    name: userData.name.trim(),
-    email: cleanEmail,
-    password: userData.password,
-    phone: '',
-  };
+  id: Date.now(),
+  name: userData.name.trim(),
+  email: cleanEmail,
+  institution: userData.institution,
+  studentId: userData.studentId.trim(),
+  phone: userData.phone.trim(),
+  major: userData.major,
+  campus: userData.campus,
+  password: userData.password,
+};
 
   const newList = [...users, newUser];
   await saveUsers(newList);
