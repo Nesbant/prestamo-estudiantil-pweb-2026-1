@@ -1,221 +1,269 @@
-import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import ChatAcciones from '../components/chat/ChatAcciones';
-import ChatHeader from '../components/chat/ChatHeader';
-import ChatInput from '../components/chat/ChatInput';
-import ChatListaMensajes from '../components/chat/ChatListaMensajes';
-import ChatSidebar from '../components/chat/ChatSidebar';
-import { useAuth } from '../features/auth/AuthContext';
-import { contactosChatMock, mensajesChatMock } from '../mocks/chat';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import ChatAcciones from "../components/chat/ChatAcciones";
+import ChatHeader from "../components/chat/ChatHeader";
+import ChatInput from "../components/chat/ChatInput";
+import ChatListaMensajes from "../components/chat/ChatListaMensajes";
+import ChatSidebar from "../components/chat/ChatSidebar";
+import { useAuth } from "../features/auth/AuthContext";
+import { chatContactsMock, chatMessagesMock } from "../mocks/chat";
+
+const EMPTY_MESSAGES = [];
+const FIRST_CHAT_ID = chatContactsMock[0]?.id ?? null;
+
+const getCurrentTime = () =>
+	new Date().toLocaleTimeString([], {
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+
+const createMessageId = () =>
+	`${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+const getAvatarFallback = (name = "Usuario") =>
+	`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=00543D&color=fff`;
+
+const normalizeIncomingContact = (incoming) => {
+	if (!incoming) return null;
+
+	return {
+		id: incoming.id,
+		name: incoming.name || "Usuario",
+		item: incoming.item || incoming.publicacion || "Publicación sin título",
+		avatar: incoming.avatar || getAvatarFallback(incoming.name),
+		lastMessage: incoming.lastMessage || "Escribe el primer mensaje...",
+		time: "Ahora",
+		unread: 0,
+		isMyPost: Boolean(incoming.isMyPost),
+	};
+};
 
 export default function ChatPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { currentUser } = useAuth();
-  const messagesEndRef = useRef(null);
+	const location = useLocation();
+	const navigate = useNavigate();
+	const { currentUser } = useAuth();
+	const messagesEndRef = useRef(null);
+	const routeContact = normalizeIncomingContact(location.state?.newContact);
+	const routeContactExists = chatContactsMock.some(
+		(contact) => contact.id === routeContact?.id,
+	);
 
-  const [activeChatId, setActiveChatId] = useState(1);
-  const [contacts, setContacts] = useState(contactosChatMock);
-  const [tempContact, setTempContact] = useState(null);
-  const [messages, setMessages] = useState(mensajesChatMock);
-  const [newMessage, setNewMessage] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+	const [activeChatId, setActiveChatId] = useState(
+		routeContact?.id ?? FIRST_CHAT_ID,
+	);
+	const [contacts, setContacts] = useState(chatContactsMock);
+	const [tempContact, setTempContact] = useState(() =>
+		routeContact && !routeContactExists ? routeContact : null,
+	);
+	const [messages, setMessages] = useState(chatMessagesMock);
+	const [newMessage, setNewMessage] = useState("");
+	const [searchTerm, setSearchTerm] = useState("");
+	const [showConversationMobile, setShowConversationMobile] = useState(
+		Boolean(routeContact),
+	);
 
-  useEffect(() => {
-    const incoming = location.state?.newContact;
-    if (!incoming) return;
+	useEffect(() => {
+		if (location.state?.newContact) {
+			navigate(location.pathname, { replace: true, state: {} });
+		}
+	}, [location.pathname, location.state, navigate]);
 
-    const exists = contacts.find((contact) => contact.id === incoming.id);
+	const displayContacts = useMemo(() => {
+		if (!tempContact) return contacts;
 
-    if (exists) {
-      setActiveChatId(exists.id);
-    } else {
-      setTempContact({
-        ...incoming,
-        lastMessage: incoming.initialMessage || 'Escribe el primer mensaje...',
-        time: 'Ahora',
-        unread: 0,
-      });
-      setActiveChatId(incoming.id);
+		const uniqueContacts = new Map();
+		[tempContact, ...contacts].forEach((contact) => {
+			if (!uniqueContacts.has(contact.id))
+				uniqueContacts.set(contact.id, contact);
+		});
 
-      if (incoming.initialMessage) {
-        setMessages((previousMessages) => ({
-          ...previousMessages,
-          [incoming.id]: [
-            {
-              id: Date.now(),
-              sender: 'me',
-              text: incoming.initialMessage,
-              time: getCurrentTime(),
-            },
-          ],
-        }));
-      }
-    }
+		return Array.from(uniqueContacts.values());
+	}, [contacts, tempContact]);
 
-    navigate(location.pathname, { replace: true, state: {} });
-  }, [contacts, location.pathname, location.state, navigate]);
+	const filteredContacts = useMemo(() => {
+		const normalizedSearch = searchTerm.trim().toLowerCase();
+		if (!normalizedSearch) return displayContacts;
 
-  const displayContacts = tempContact
-    ? [tempContact, ...contacts].filter(
-        (contact, index, allContacts) =>
-          allContacts.findIndex((item) => item.id === contact.id) === index,
-      )
-    : contacts;
+		return displayContacts.filter(
+			(contact) =>
+				contact.name.toLowerCase().includes(normalizedSearch) ||
+				contact.item.toLowerCase().includes(normalizedSearch),
+		);
+	}, [displayContacts, searchTerm]);
 
-  const filteredContacts = displayContacts.filter((contact) => {
-    const normalizedSearch = searchTerm.toLowerCase();
+	const activeChat = useMemo(
+		() => displayContacts.find((contact) => contact.id === activeChatId),
+		[activeChatId, displayContacts],
+	);
 
-    return (
-      contact.name.toLowerCase().includes(normalizedSearch) ||
-      contact.item.toLowerCase().includes(normalizedSearch)
-    );
-  });
+	const currentMessages = useMemo(
+		() => messages[activeChatId] ?? EMPTY_MESSAGES,
+		[activeChatId, messages],
+	);
 
-  const activeChat = displayContacts.find(
-    (contact) => contact.id === activeChatId,
-  );
-  const currentMessages = messages[activeChatId] || [];
+	useEffect(() => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [currentMessages]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentMessages]);
+	const clearUnread = useCallback((chatId) => {
+		setContacts((previousContacts) =>
+			previousContacts.map((contact) =>
+				contact.id === chatId ? { ...contact, unread: 0 } : contact,
+			),
+		);
+		setTempContact((previousContact) =>
+			previousContact?.id === chatId
+				? { ...previousContact, unread: 0 }
+				: previousContact,
+		);
+	}, []);
 
-  const getCurrentTime = () =>
-    new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+	const handleSelectChat = useCallback(
+		(chatId) => {
+			setActiveChatId(chatId);
+			setShowConversationMobile(true);
+			clearUnread(chatId);
+		},
+		[clearUnread],
+	);
 
-  const addMessage = (text) => {
-    const sentMessage = {
-      id: Date.now(),
-      sender: 'me',
-      text,
-      time: getCurrentTime(),
-    };
+	const handleBackToList = useCallback(() => {
+		setShowConversationMobile(false);
+	}, []);
 
-    setMessages((previousMessages) => ({
-      ...previousMessages,
-      [activeChatId]: [
-        ...(previousMessages[activeChatId] || []),
-        sentMessage,
-      ],
-    }));
+	const appendOutgoingMessage = useCallback(
+		(text) => {
+			const trimmedText = text.trim();
+			if (!trimmedText || !activeChatId) return;
 
-    if (tempContact && activeChatId === tempContact.id) {
-      setContacts((previousContacts) => [
-        { ...tempContact, lastMessage: text },
-        ...previousContacts,
-      ]);
-      setTempContact(null);
-    } else {
-      setContacts((previousContacts) =>
-        previousContacts.map((contact) =>
-          contact.id === activeChatId
-            ? { ...contact, lastMessage: text }
-            : contact,
-        ),
-      );
-    }
-  };
+			const sentAt = getCurrentTime();
+			const sentMessage = {
+				id: createMessageId(),
+				sender: "me",
+				text: trimmedText,
+				time: sentAt,
+			};
 
-  const handleSendMessage = (event) => {
-    event.preventDefault();
+			setMessages((previousMessages) => ({
+				...previousMessages,
+				[activeChatId]: [
+					...(previousMessages[activeChatId] ?? EMPTY_MESSAGES),
+					sentMessage,
+				],
+			}));
 
-    const trimmedMessage = newMessage.trim();
-    if (!trimmedMessage) return;
+			setContacts((previousContacts) => {
+				if (tempContact && activeChatId === tempContact.id) {
+					return [
+						{
+							...tempContact,
+							lastMessage: trimmedText,
+							time: sentAt,
+							unread: 0,
+						},
+						...previousContacts,
+					];
+				}
 
-    const sentMessage = {
-      id: Date.now(),
-      sender: 'me',
-      text: trimmedMessage,
-      time: getCurrentTime(),
-    };
+				return previousContacts.map((contact) =>
+					contact.id === activeChatId
+						? {
+								...contact,
+								lastMessage: trimmedText,
+								time: sentAt,
+								unread: 0,
+							}
+						: contact,
+				);
+			});
 
-    setMessages((previousMessages) => ({
-      ...previousMessages,
-      [activeChatId]: [
-        ...(previousMessages[activeChatId] || []),
-        sentMessage,
-      ],
-    }));
+			if (tempContact && activeChatId === tempContact.id) {
+				setTempContact(null);
+			}
+		},
+		[activeChatId, tempContact],
+	);
 
-    if (tempContact && activeChatId === tempContact.id) {
-      setContacts((previousContacts) => [
-        { ...tempContact, lastMessage: trimmedMessage },
-        ...previousContacts,
-      ]);
-      setTempContact(null);
-    } else {
-      setContacts((previousContacts) =>
-        previousContacts.map((contact) =>
-          contact.id === activeChatId
-            ? { ...contact, lastMessage: trimmedMessage }
-            : contact,
-        ),
-      );
-    }
+	const handleSendMessage = useCallback(
+		(event) => {
+			event.preventDefault();
+			appendOutgoingMessage(newMessage);
+			setNewMessage("");
+		},
+		[appendOutgoingMessage, newMessage],
+	);
 
-    setNewMessage('');
-  };
+	const handleSharePhone = useCallback(() => {
+		const phone = currentUser?.phone?.trim();
+		appendOutgoingMessage(
+			phone
+				? `Mi teléfono es ${phone}.`
+				: "Aún no tengo un teléfono registrado en mi perfil.",
+		);
+	}, [appendOutgoingMessage, currentUser?.phone]);
 
-  const handleSharePhone = () => {
-    const phone = currentUser?.phone?.trim();
-    addMessage(
-      phone
-        ? `Mi telefono es ${phone}.`
-        : 'Aun no tengo un telefono registrado en mi perfil.',
-    );
-  };
+	const handleConfirmDelivery = useCallback(() => {
+		if (!activeChat) return;
+		appendOutgoingMessage(`Confirmo que entregué "${activeChat.item}".`);
+	}, [activeChat, appendOutgoingMessage]);
 
-  const handleConfirmReceived = () => {
-    addMessage(`Confirmo que recibi el articulo "${activeChat.item}".`);
-  };
+	const handleConfirmReceived = useCallback(() => {
+		if (!activeChat) return;
+		appendOutgoingMessage(`Confirmo que recibí "${activeChat.item}".`);
+	}, [activeChat, appendOutgoingMessage]);
 
-  const handleConfirmDelivery = () => {
-    addMessage(`Confirmo que entregue el articulo "${activeChat.item}".`);
-  };
+	const handleRejectLoan = useCallback(() => {
+		if (!activeChat) return;
+		appendOutgoingMessage(
+			`No podré continuar con el préstamo de "${activeChat.item}".`,
+		);
+	}, [activeChat, appendOutgoingMessage]);
 
-  const handleRejectLoan = () => {
-    addMessage(`No podre continuar con el prestamo de "${activeChat.item}".`);
-  };
+	return (
+		<main className="mx-auto flex h-[calc(100vh-80px)] w-full max-w-7xl flex-col px-4 py-6 md:px-8">
+			<div className="flex h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+				<div
+					className={`${showConversationMobile ? "hidden" : "block"} h-full w-full md:block md:w-auto`}
+				>
+					<ChatSidebar
+						chats={filteredContacts}
+						onSearchChange={setSearchTerm}
+						onSelectChat={handleSelectChat}
+						searchTerm={searchTerm}
+						selectedChatId={activeChatId}
+					/>
+				</div>
 
-  return (
-    <main className='mx-auto flex h-[calc(100vh-80px)] w-full max-w-7xl flex-col px-4 py-6 md:px-8'>
-      <div className='flex h-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm'>
-        <ChatSidebar
-          chats={filteredContacts}
-          onSearchChange={setSearchTerm}
-          onSelectChat={setActiveChatId}
-          searchTerm={searchTerm}
-          selectedChatId={activeChatId}
-        />
-
-        <section className='hidden flex-1 flex-col bg-[#F9FAFB] md:flex'>
-          {activeChat && (
-            <>
-              <ChatHeader chat={activeChat} />
-              <ChatListaMensajes
-                messages={currentMessages}
-                messagesEndRef={messagesEndRef}
-              />
-              <ChatAcciones
-                isMyPost={activeChat.isMyPost}
-                onConfirmDelivery={handleConfirmDelivery}
-                onConfirmReceived={handleConfirmReceived}
-                onRejectLoan={handleRejectLoan}
-                onSharePhone={handleSharePhone}
-              />
-              <ChatInput
-                onChange={setNewMessage}
-                onSubmit={handleSendMessage}
-                value={newMessage}
-              />
-            </>
-          )}
-        </section>
-      </div>
-    </main>
-  );
+				<section
+					className={`${showConversationMobile ? "flex" : "hidden"} flex-1 flex-col bg-[#F9FAFB] md:flex`}
+				>
+					{activeChat ? (
+						<>
+							<ChatHeader chat={activeChat} onBack={handleBackToList} />
+							<ChatListaMensajes
+								messages={currentMessages}
+								messagesEndRef={messagesEndRef}
+							/>
+							<ChatAcciones
+								isMyPost={activeChat.isMyPost}
+								onConfirmDelivery={handleConfirmDelivery}
+								onConfirmReceived={handleConfirmReceived}
+								onRejectLoan={handleRejectLoan}
+								onSharePhone={handleSharePhone}
+							/>
+							<ChatInput
+								onChange={setNewMessage}
+								onSubmit={handleSendMessage}
+								value={newMessage}
+							/>
+						</>
+					) : (
+						<div className="flex h-full items-center justify-center p-6 text-center text-sm text-gray-500">
+							Selecciona una conversación para comenzar.
+						</div>
+					)}
+				</section>
+			</div>
+		</main>
+	);
 }

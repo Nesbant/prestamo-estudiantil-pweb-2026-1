@@ -3,8 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
-  faEye,
-  faClock,
   faStar as faStarSolid,
   faMapMarkerAlt,
   faShieldAlt,
@@ -82,18 +80,7 @@ export default function PostPage() {
       posts.map((p) => (p.id === post.id ? { ...p, status: 'lent' } : p)),
     );
     setShowRequestModal(false);
-    navigate('/chat', {
-      state: {
-        newContact: {
-          id: `chat-${post.authorId}-${post.id}`,
-          name: post.authorName,
-          avatar: post.authorAvatar,
-          item: post.title,
-          isMyPost: false,
-          initialMessage: `${currentUser?.name || 'Un estudiante'} te ha solicitado un prestamo por "${post.title}".`,
-        },
-      },
-    });
+    setShowSuccessModal(true);
   };
 
   const handleOfferConfirm = () => {
@@ -101,18 +88,7 @@ export default function PostPage() {
       posts.map((p) => (p.id === post.id ? { ...p, status: 'lent' } : p)),
     );
     setShowOfferModal(false);
-    navigate('/chat', {
-      state: {
-        newContact: {
-          id: `chat-${post.authorId}-${post.id}`,
-          name: post.authorName,
-          avatar: post.authorAvatar,
-          item: post.title,
-          isMyPost: false,
-          initialMessage: `Hola, soy ${currentUser?.name || 'un estudiante'}, puedo prestarte el articulo "${post.title}".`,
-        },
-      },
-    });
+    setShowSuccessModal(true);
   };
 
   const toggleFavorite = () => {
@@ -293,7 +269,7 @@ export default function PostPage() {
                             name: post.authorName,
                             avatar: post.authorAvatar,
                             item: post.title,
-                            isMyPost,
+                            isMyPost: false,
                           },
                         },
                       })
