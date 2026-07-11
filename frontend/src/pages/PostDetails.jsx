@@ -3,8 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
-  faEye,
-  faClock,
   faStar as faStarSolid,
   faMapMarkerAlt,
   faShieldAlt,
@@ -267,10 +265,11 @@ export default function PostPage() {
                       navigate('/chat', {
                         state: {
                           newContact: {
-                            id: post.authorId,
+                            id: `chat-${post.authorId}-${post.id}`,
                             name: post.authorName,
                             avatar: post.authorAvatar,
                             item: post.title,
+                            isMyPost: false,
                           },
                         },
                       })
