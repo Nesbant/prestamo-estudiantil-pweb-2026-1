@@ -1,110 +1,85 @@
-const USERS_KEY = 'users';
-const CURRENT_USER_KEY = 'currentUser';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
+const TOKEN_KEY = 'campuslend_access_token';
 
-export const getUsers = async () => {
-  const savedUsers = localStorage.getItem(USERS_KEY);
-  return savedUsers ? JSON.parse(savedUsers) : [];
+export const getAccessToken = () => sessionStorage.getItem(TOKEN_KEY);
+
+const saveAccessToken = (token) => {
+  if (token) sessionStorage.setItem(TOKEN_KEY, token);
 };
 
-export const saveUsers = async (users) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
+const clearSession = () => sessionStorage.removeItem(TOKEN_KEY);
 
-export const registerUser = async (userData) => {
-  const users = await getUsers();
+async function apiRequest(path, options = {}) {
+  const token = getAccessToken();
+  let response;
 
-  const cleanEmail = userData.email.trim().toLowerCase();
-
-  const emailExists = users.some(
-    (user) => user.email.toLowerCase() === cleanEmail,
-  );
-
-  if (emailExists) {
-    return {
-      ok: false,
-      message: 'Este correo ya se encuentra registrado',
-    };
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.');
   }
 
-  const newUser = {
-  id: Date.now(),
-  name: userData.name.trim(),
-  email: cleanEmail,
-  institution: userData.institution,
-  studentId: userData.studentId.trim(),
-  phone: userData.phone.trim(),
-  major: userData.major,
-  campus: userData.campus,
-  password: userData.password,
-};
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401 && token) clearSession();
+    const error = new Error(payload.message || 'Ocurrió un error al procesar la solicitud.');
+    error.status = response.status;
+    error.code = payload.code;
+    throw error;
+  }
+  return payload;
+}
 
-  const newList = [...users, newUser];
-  await saveUsers(newList);
-
-  return {
-    ok: true,
-    message: 'Usuario registrado correctamente',
-  };
+export const registerUser = async (userData) => {
+  try {
+    const response = await apiRequest('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+    return { ok: true, message: response.message };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
 };
 
 export const loginUser = async (email, password) => {
-  const users = await getUsers();
-  const cleanEmail = email.trim().toLowerCase();
-
-  const foundUser = users.find(
-    (user) =>
-      user.email.toLowerCase() === cleanEmail && user.password === password,
-  );
-
-  if (!foundUser) {
-    return {
-      ok: false,
-      message: 'Correo o contraseña incorrectos',
-    };
+  try {
+    const response = await apiRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    saveAccessToken(response.data.accessToken);
+    return { ok: true, user: response.data.user };
+  } catch (error) {
+    return { ok: false, message: error.message };
   }
-
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(foundUser));
-
-  return {
-    ok: true,
-    user: foundUser,
-  };
 };
 
 export const getCurrentUser = async () => {
-  const savedUser = localStorage.getItem(CURRENT_USER_KEY);
-  return savedUser ? JSON.parse(savedUser) : null;
+  if (!getAccessToken()) return null;
+  try {
+    const response = await apiRequest('/auth/me');
+    return response.data;
+  } catch {
+    clearSession();
+    return null;
+  }
 };
 
 export const updateCurrentUser = async (updatedData) => {
-  const users = await getUsers();
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
-    return null;
-  }
-
-  const updatedUsers = users.map((user) => {
-    if (user.id === currentUser.id) {
-      return {
-        ...user,
-        ...updatedData,
-      };
-    }
-    return user;
+  const response = await apiRequest('/auth/me', {
+    method: 'PATCH',
+    body: JSON.stringify(updatedData),
   });
-
-  const updatedUser = {
-    ...currentUser,
-    ...updatedData,
-  };
-
-  await saveUsers(updatedUsers);
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
-
-  return updatedUser;
+  saveAccessToken(response.data.accessToken);
+  return response.data.user;
 };
 
-export const logoutUser = async () => {
-  localStorage.removeItem(CURRENT_USER_KEY);
-};
+export const logoutUser = async () => clearSession();

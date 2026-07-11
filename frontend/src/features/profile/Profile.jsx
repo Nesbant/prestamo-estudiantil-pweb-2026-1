@@ -13,6 +13,7 @@ export default function Profile() {
   const [avatar, setAvatar] = useState('');
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -31,14 +32,20 @@ export default function Profile() {
       return;
     }
 
-    const updatedUserObj = await updateCurrentUser({
-      name: name.trim(),
-      phone: phone.trim(),
-      avatar: avatar.trim(),
-    });
-
-    updateUser(updatedUserObj);
-    setShowModal(true);
+    setSaving(true);
+    try {
+      const updatedUserObj = await updateCurrentUser({
+        name: name.trim(),
+        phone: phone.trim(),
+        avatar: avatar.trim(),
+      });
+      updateUser(updatedUserObj);
+      setShowModal(true);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -142,9 +149,10 @@ export default function Profile() {
 
           <button
             type='submit'
-            className='h-12 w-full rounded-md bg-[#00543D] font-semibold text-white hover:bg-[#004231]'
+            disabled={saving}
+            className='h-12 w-full rounded-md bg-[#00543D] font-semibold text-white hover:bg-[#004231] disabled:cursor-not-allowed disabled:opacity-60'
           >
-            Guardar cambios
+            {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </form>
       </div>
