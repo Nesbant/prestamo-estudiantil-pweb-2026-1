@@ -6,94 +6,141 @@ import ChatInput from "../components/chat/ChatInput";
 import ChatListaMensajes from "../components/chat/ChatListaMensajes";
 import ChatSidebar from "../components/chat/ChatSidebar";
 import { useAuth } from "../features/auth/AuthContext";
-import { chatContactsMock, chatMessagesMock } from "../mocks/chat";
+import {
+	createConversation,
+	getConversationMessages,
+	getConversations,
+	sendConversationMessage,
+} from "../features/chat/chatService";
 
 const EMPTY_MESSAGES = [];
-const FIRST_CHAT_ID = chatContactsMock[0]?.id ?? null;
-
-const getCurrentTime = () =>
-	new Date().toLocaleTimeString([], {
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-
-const createMessageId = () =>
-	`${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const getAvatarFallback = (name = "Usuario") =>
 	`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=00543D&color=fff`;
 
-const normalizeIncomingContact = (incoming) => {
-	if (!incoming) return null;
+const formatTime = (value) => {
+	if (!value) return "Ahora";
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return "Ahora";
+
+	return date.toLocaleTimeString([], {
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+};
+
+const normalizeConversation = (conversation) => {
+	const otherUser = conversation.otherUser || {};
+	const name = otherUser.name || "Usuario";
 
 	return {
-		id: incoming.id,
-		name: incoming.name || "Usuario",
-		item: incoming.item || incoming.publicacion || "Publicación sin título",
-		avatar: incoming.avatar || getAvatarFallback(incoming.name),
-		lastMessage: incoming.lastMessage || "Escribe el primer mensaje...",
-		time: "Ahora",
-		unread: 0,
-		isMyPost: Boolean(incoming.isMyPost),
+		id: String(conversation.id),
+		postId: conversation.postId,
+		name,
+		item: conversation.postTitle || "Publicación sin título",
+		avatar: otherUser.avatar || getAvatarFallback(name),
+		lastMessage: conversation.lastMessage || "Escribe el primer mensaje...",
+		time: formatTime(conversation.lastMessageAt || conversation.updatedAt),
+		unread: Number(conversation.unread) || 0,
+		isMyPost: Boolean(conversation.isMyPost),
+		lastMessageAt: conversation.lastMessageAt,
+		updatedAt: conversation.updatedAt,
 	};
 };
+
+const normalizeMessage = (message, currentUserId) => ({
+	id: String(message.id),
+	sender: String(message.senderId) === String(currentUserId) ? "me" : "other",
+	text: message.text || "",
+	time: formatTime(message.createdAt),
+	createdAt: message.createdAt,
+});
+
+const upsertConversation = (conversations, conversation) => [
+	conversation,
+	...conversations.filter((item) => item.id !== conversation.id),
+];
 
 export default function ChatPage() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const { currentUser } = useAuth();
+	const currentUserId = currentUser?.id;
 	const messagesEndRef = useRef(null);
-	const routeContact = normalizeIncomingContact(location.state?.newContact);
-	const routeContactExists = chatContactsMock.some(
-		(contact) => contact.id === routeContact?.id,
-	);
+	const startConversation = location.state?.startConversation;
 
-	const [activeChatId, setActiveChatId] = useState(
-		routeContact?.id ?? FIRST_CHAT_ID,
-	);
-	const [contacts, setContacts] = useState(chatContactsMock);
-	const [tempContact, setTempContact] = useState(() =>
-		routeContact && !routeContactExists ? routeContact : null,
-	);
-	const [messages, setMessages] = useState(chatMessagesMock);
+	const [activeChatId, setActiveChatId] = useState(null);
+	const [contacts, setContacts] = useState([]);
+	const [messages, setMessages] = useState({});
 	const [newMessage, setNewMessage] = useState("");
 	const [searchTerm, setSearchTerm] = useState("");
-	const [showConversationMobile, setShowConversationMobile] = useState(
-		Boolean(routeContact),
-	);
+	const [showConversationMobile, setShowConversationMobile] = useState(false);
+	const [loadingConversations, setLoadingConversations] = useState(true);
+	const [loadingMessages, setLoadingMessages] = useState(false);
+	const [sendingMessage, setSendingMessage] = useState(false);
+	const [error, setError] = useState("");
+	const [messageError, setMessageError] = useState("");
 
 	useEffect(() => {
-		if (location.state?.newContact) {
-			navigate(location.pathname, { replace: true, state: {} });
+		if (!currentUserId) return undefined;
+
+		let ignore = false;
+
+		async function loadConversations() {
+			setLoadingConversations(true);
+			setError("");
+
+			try {
+				const conversations = (await getConversations()).map(normalizeConversation);
+				let nextContacts = conversations;
+				let nextActiveChatId = conversations[0]?.id ?? null;
+
+				if (startConversation?.postId && startConversation?.otherUserId) {
+					try {
+						const conversation = normalizeConversation(
+							await createConversation(startConversation),
+						);
+						nextContacts = upsertConversation(conversations, conversation);
+						nextActiveChatId = conversation.id;
+					} catch (conversationError) {
+						if (!ignore) setError(conversationError.message);
+					} finally {
+						if (!ignore) navigate(location.pathname, { replace: true, state: {} });
+					}
+				}
+
+				if (ignore) return;
+				setContacts(nextContacts);
+				setActiveChatId(nextActiveChatId);
+				setShowConversationMobile(Boolean(nextActiveChatId && startConversation));
+			} catch (requestError) {
+				if (!ignore) setError(requestError.message);
+			} finally {
+				if (!ignore) setLoadingConversations(false);
+			}
 		}
-	}, [location.pathname, location.state, navigate]);
 
-	const displayContacts = useMemo(() => {
-		if (!tempContact) return contacts;
+		loadConversations();
 
-		const uniqueContacts = new Map();
-		[tempContact, ...contacts].forEach((contact) => {
-			if (!uniqueContacts.has(contact.id))
-				uniqueContacts.set(contact.id, contact);
-		});
-
-		return Array.from(uniqueContacts.values());
-	}, [contacts, tempContact]);
+		return () => {
+			ignore = true;
+		};
+	}, [currentUserId, location.pathname, navigate, startConversation]);
 
 	const filteredContacts = useMemo(() => {
 		const normalizedSearch = searchTerm.trim().toLowerCase();
-		if (!normalizedSearch) return displayContacts;
+		if (!normalizedSearch) return contacts;
 
-		return displayContacts.filter(
+		return contacts.filter(
 			(contact) =>
 				contact.name.toLowerCase().includes(normalizedSearch) ||
 				contact.item.toLowerCase().includes(normalizedSearch),
 		);
-	}, [displayContacts, searchTerm]);
+	}, [contacts, searchTerm]);
 
 	const activeChat = useMemo(
-		() => displayContacts.find((contact) => contact.id === activeChatId),
-		[activeChatId, displayContacts],
+		() => contacts.find((contact) => contact.id === activeChatId),
+		[activeChatId, contacts],
 	);
 
 	const currentMessages = useMemo(
@@ -105,16 +152,43 @@ export default function ChatPage() {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [currentMessages]);
 
+	useEffect(() => {
+		if (!activeChatId || !currentUserId) return undefined;
+
+		let ignore = false;
+
+		async function loadMessages() {
+			setLoadingMessages(true);
+			setMessageError("");
+
+			try {
+				const conversationMessages = await getConversationMessages(activeChatId);
+				if (ignore) return;
+				setMessages((previousMessages) => ({
+					...previousMessages,
+					[activeChatId]: conversationMessages.map((message) =>
+						normalizeMessage(message, currentUserId),
+					),
+				}));
+			} catch (requestError) {
+				if (!ignore) setMessageError(requestError.message);
+			} finally {
+				if (!ignore) setLoadingMessages(false);
+			}
+		}
+
+		loadMessages();
+
+		return () => {
+			ignore = true;
+		};
+	}, [activeChatId, currentUserId]);
+
 	const clearUnread = useCallback((chatId) => {
 		setContacts((previousContacts) =>
 			previousContacts.map((contact) =>
 				contact.id === chatId ? { ...contact, unread: 0 } : contact,
 			),
-		);
-		setTempContact((previousContact) =>
-			previousContact?.id === chatId
-				? { ...previousContact, unread: 0 }
-				: previousContact,
 		);
 	}, []);
 
@@ -131,93 +205,84 @@ export default function ChatPage() {
 		setShowConversationMobile(false);
 	}, []);
 
-	const appendOutgoingMessage = useCallback(
-		(text) => {
+	const sendChatMessage = useCallback(
+		async (text) => {
 			const trimmedText = text.trim();
-			if (!trimmedText || !activeChatId) return;
+			if (!trimmedText || !activeChatId || !currentUserId || sendingMessage) return;
 
-			const sentAt = getCurrentTime();
-			const sentMessage = {
-				id: createMessageId(),
-				sender: "me",
-				text: trimmedText,
-				time: sentAt,
-			};
+			setSendingMessage(true);
+			setMessageError("");
 
-			setMessages((previousMessages) => ({
-				...previousMessages,
-				[activeChatId]: [
-					...(previousMessages[activeChatId] ?? EMPTY_MESSAGES),
-					sentMessage,
-				],
-			}));
-
-			setContacts((previousContacts) => {
-				if (tempContact && activeChatId === tempContact.id) {
-					return [
-						{
-							...tempContact,
-							lastMessage: trimmedText,
-							time: sentAt,
-							unread: 0,
-						},
-						...previousContacts,
-					];
-				}
-
-				return previousContacts.map((contact) =>
-					contact.id === activeChatId
-						? {
-								...contact,
-								lastMessage: trimmedText,
-								time: sentAt,
-								unread: 0,
-							}
-						: contact,
+			try {
+				const savedMessage = await sendConversationMessage(
+					activeChatId,
+					trimmedText,
 				);
-			});
+				const normalizedMessage = normalizeMessage(savedMessage, currentUserId);
 
-			if (tempContact && activeChatId === tempContact.id) {
-				setTempContact(null);
+				setMessages((previousMessages) => ({
+					...previousMessages,
+					[activeChatId]: [
+						...(previousMessages[activeChatId] ?? EMPTY_MESSAGES),
+						normalizedMessage,
+					],
+				}));
+				setContacts((previousContacts) =>
+					previousContacts.map((contact) =>
+						contact.id === activeChatId
+							? {
+									...contact,
+									lastMessage: normalizedMessage.text,
+									time: normalizedMessage.time,
+									lastMessageAt: savedMessage.createdAt,
+									unread: 0,
+								}
+							: contact,
+					),
+				);
+				setNewMessage("");
+			} catch (requestError) {
+				setMessageError(requestError.message);
+			} finally {
+				setSendingMessage(false);
 			}
 		},
-		[activeChatId, tempContact],
+		[activeChatId, currentUserId, sendingMessage],
 	);
 
 	const handleSendMessage = useCallback(
 		(event) => {
 			event.preventDefault();
-			appendOutgoingMessage(newMessage);
-			setNewMessage("");
+			sendChatMessage(newMessage);
 		},
-		[appendOutgoingMessage, newMessage],
+		[newMessage, sendChatMessage],
 	);
 
 	const handleSharePhone = useCallback(() => {
 		const phone = currentUser?.phone?.trim();
-		appendOutgoingMessage(
+		sendChatMessage(
 			phone
 				? `Mi teléfono es ${phone}.`
 				: "Aún no tengo un teléfono registrado en mi perfil.",
 		);
-	}, [appendOutgoingMessage, currentUser?.phone]);
+	}, [currentUser?.phone, sendChatMessage]);
 
 	const handleConfirmDelivery = useCallback(() => {
 		if (!activeChat) return;
-		appendOutgoingMessage(`Confirmo que entregué "${activeChat.item}".`);
-	}, [activeChat, appendOutgoingMessage]);
+		sendChatMessage(`Confirmo que entregué "${activeChat.item}".`);
+	}, [activeChat, sendChatMessage]);
 
 	const handleConfirmReceived = useCallback(() => {
 		if (!activeChat) return;
-		appendOutgoingMessage(`Confirmo que recibí "${activeChat.item}".`);
-	}, [activeChat, appendOutgoingMessage]);
+		sendChatMessage(`Confirmo que recibí "${activeChat.item}".`);
+	}, [activeChat, sendChatMessage]);
 
 	const handleRejectLoan = useCallback(() => {
 		if (!activeChat) return;
-		appendOutgoingMessage(
+		sendChatMessage(
 			`No podré continuar con el préstamo de "${activeChat.item}".`,
 		);
-	}, [activeChat, appendOutgoingMessage]);
+	}, [activeChat, sendChatMessage]);
 
 	return (
 		<main className="mx-auto flex h-[calc(100vh-80px)] w-full max-w-7xl flex-col px-4 py-6 md:px-8">
@@ -237,13 +302,34 @@ export default function ChatPage() {
 				<section
 					className={`${showConversationMobile ? "flex" : "hidden"} flex-1 flex-col bg-[#F9FAFB] md:flex`}
 				>
-					{activeChat ? (
+					{error && (
+						<div className="border-b border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+							{error}
+						</div>
+					)}
+
+					{loadingConversations ? (
+						<div className="flex h-full items-center justify-center p-6 text-center text-sm text-gray-500">
+							Cargando conversaciones...
+						</div>
+					) : activeChat ? (
 						<>
 							<ChatHeader chat={activeChat} onBack={handleBackToList} />
-							<ChatListaMensajes
-								messages={currentMessages}
-								messagesEndRef={messagesEndRef}
-							/>
+							{messageError && (
+								<div className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700">
+									{messageError}
+								</div>
+							)}
+							{loadingMessages ? (
+								<div className="flex flex-1 items-center justify-center p-6 text-sm text-gray-500">
+									Cargando mensajes...
+								</div>
+							) : (
+								<ChatListaMensajes
+									messages={currentMessages}
+									messagesEndRef={messagesEndRef}
+								/>
+							)}
 							<ChatAcciones
 								isMyPost={activeChat.isMyPost}
 								onConfirmDelivery={handleConfirmDelivery}
@@ -252,6 +338,7 @@ export default function ChatPage() {
 								onSharePhone={handleSharePhone}
 							/>
 							<ChatInput
+								disabled={sendingMessage || loadingMessages}
 								onChange={setNewMessage}
 								onSubmit={handleSendMessage}
 								value={newMessage}
@@ -259,7 +346,7 @@ export default function ChatPage() {
 						</>
 					) : (
 						<div className="flex h-full items-center justify-center p-6 text-center text-sm text-gray-500">
-							Selecciona una conversación para comenzar.
+							No tienes conversaciones todavía.
 						</div>
 					)}
 				</section>
