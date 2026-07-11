@@ -9,6 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +26,9 @@ export default function Login() {
       return;
     }
 
+    setSubmitting(true);
     const result = await loginUser(email, password);
+    setSubmitting(false);
 
     if (!result.ok) {
       setError(result.message);
@@ -75,9 +78,10 @@ export default function Login() {
 
       <button
         type='submit'
-        className='h-12 w-full rounded-md bg-[#00543D] font-semibold text-white hover:bg-[#004231]'
+        disabled={submitting}
+        className='h-12 w-full rounded-md bg-[#00543D] font-semibold text-white hover:bg-[#004231] disabled:cursor-not-allowed disabled:opacity-60'
       >
-        Iniciar Sesión →
+        {submitting ? 'Ingresando...' : 'Iniciar Sesión →'}
       </button>
 
       <p className='mt-6 text-sm text-center text-gray-500'>

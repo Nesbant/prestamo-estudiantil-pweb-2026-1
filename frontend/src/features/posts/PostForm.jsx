@@ -130,7 +130,9 @@ export default function PostForm() {
 
         <div className='flex justify-center gap-4'>
           <button
-            onClick={() => navigate(`/post/${createdPost.id}`, { replace: true })}
+            onClick={() =>
+              navigate(`/post/${createdPost.id}`, { replace: true })
+            }
             className='flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white transition-colors bg-[#00543D] rounded-lg cursor-pointer hover:bg-[#00402e]'
           >
             <FontAwesomeIcon icon={faEye} /> Ver mi publicación
@@ -147,8 +149,8 @@ export default function PostForm() {
   }
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-      <div className='w-full max-w-2xl p-8 bg-white shadow-xl rounded-2xl'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'>
+      <div className='w-full max-w-2xl p-6 sm:p-8 bg-white shadow-xl rounded-2xl max-h-[95vh] overflow-y-auto'>
         <h2 className='mb-6 text-2xl font-bold text-gray-800'>
           {isEditing ? 'Editar Publicación' : 'Crear Publicación'}
         </h2>

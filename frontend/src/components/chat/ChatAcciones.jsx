@@ -1,22 +1,21 @@
 import { memo } from "react";
 
-function ChatEstadosPanel({
+function ChatAcciones({
 	isMyPost,
 	onConfirmDelivery,
 	onConfirmReceived,
-	onRequestLoan,
+	onRejectLoan,
+	onSharePhone,
 }) {
 	return (
 		<div className="flex flex-wrap gap-2 border-t border-gray-200 bg-white px-4 py-3">
-			{!isMyPost && (
-				<button
-					className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-					onClick={onRequestLoan}
-					type="button"
-				>
-					Solicitar préstamo
-				</button>
-			)}
+			<button
+				className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+				onClick={onSharePhone}
+				type="button"
+			>
+				Compartir mi teléfono
+			</button>
 
 			{isMyPost ? (
 				<button
@@ -35,8 +34,16 @@ function ChatEstadosPanel({
 					Confirmar recepción
 				</button>
 			)}
+
+			<button
+				className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+				onClick={onRejectLoan}
+				type="button"
+			>
+				Rechazar préstamo
+			</button>
 		</div>
 	);
 }
 
-export default memo(ChatEstadosPanel);
+export default memo(ChatAcciones);

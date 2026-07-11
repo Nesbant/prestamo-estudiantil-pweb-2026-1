@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import ChatEstadosPanel from "../components/chat/ChatEstadosPanel";
+import ChatAcciones from "../components/chat/ChatAcciones";
 import ChatHeader from "../components/chat/ChatHeader";
 import ChatInput from "../components/chat/ChatInput";
 import ChatListaMensajes from "../components/chat/ChatListaMensajes";
 import ChatSidebar from "../components/chat/ChatSidebar";
+import { useAuth } from "../features/auth/AuthContext";
 import { chatContactsMock, chatMessagesMock } from "../mocks/chat";
 
 const EMPTY_MESSAGES = [];
@@ -40,6 +41,7 @@ const normalizeIncomingContact = (incoming) => {
 export default function ChatPage() {
 	const location = useLocation();
 	const navigate = useNavigate();
+	const { currentUser } = useAuth();
 	const messagesEndRef = useRef(null);
 	const routeContact = normalizeIncomingContact(location.state?.newContact);
 	const routeContactExists = chatContactsMock.some(
@@ -191,12 +193,14 @@ export default function ChatPage() {
 		[appendOutgoingMessage, newMessage],
 	);
 
-	const handleRequestLoan = useCallback(() => {
-		if (!activeChat) return;
+	const handleSharePhone = useCallback(() => {
+		const phone = currentUser?.phone?.trim();
 		appendOutgoingMessage(
-			`Hola, me interesa solicitar el préstamo de "${activeChat.item}".`,
+			phone
+				? `Mi teléfono es ${phone}.`
+				: "Aún no tengo un teléfono registrado en mi perfil.",
 		);
-	}, [activeChat, appendOutgoingMessage]);
+	}, [appendOutgoingMessage, currentUser?.phone]);
 
 	const handleConfirmDelivery = useCallback(() => {
 		if (!activeChat) return;
@@ -206,6 +210,13 @@ export default function ChatPage() {
 	const handleConfirmReceived = useCallback(() => {
 		if (!activeChat) return;
 		appendOutgoingMessage(`Confirmo que recibí "${activeChat.item}".`);
+	}, [activeChat, appendOutgoingMessage]);
+
+	const handleRejectLoan = useCallback(() => {
+		if (!activeChat) return;
+		appendOutgoingMessage(
+			`No podré continuar con el préstamo de "${activeChat.item}".`,
+		);
 	}, [activeChat, appendOutgoingMessage]);
 
 	return (
@@ -233,11 +244,12 @@ export default function ChatPage() {
 								messages={currentMessages}
 								messagesEndRef={messagesEndRef}
 							/>
-							<ChatEstadosPanel
+							<ChatAcciones
 								isMyPost={activeChat.isMyPost}
 								onConfirmDelivery={handleConfirmDelivery}
 								onConfirmReceived={handleConfirmReceived}
-								onRequestLoan={handleRequestLoan}
+								onRejectLoan={handleRejectLoan}
+								onSharePhone={handleSharePhone}
 							/>
 							<ChatInput
 								onChange={setNewMessage}
