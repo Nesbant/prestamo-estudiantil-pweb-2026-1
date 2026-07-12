@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import Modal from '../../components/ui/Modal';
-import { updateCurrentUser } from '../auth/userService';
+import { updateUser as updateUserService } from '../auth/userService';
 import { useAuth } from '../auth/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faImage } from '@fortawesome/free-solid-svg-icons';
 import Input from '../../components/ui/Input';
 
 export default function Profile() {
-  const { currentUser, updateUser } = useAuth();
+  const { currentUser, token, updateUser } = useAuth();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [avatar, setAvatar] = useState('');
@@ -32,19 +32,19 @@ export default function Profile() {
       return;
     }
 
-    setSaving(true);
     try {
-      const updatedUserObj = await updateCurrentUser({
-        name: name.trim(),
-        phone: phone.trim(),
-        avatar: avatar.trim(),
-      });
-      updateUser(updatedUserObj);
+      const updatedData = await updateUserService(
+        {
+          name: name.trim(),
+          phone: phone.trim(),
+          avatar,
+        },
+        token,
+      );
+      updateUser(updatedData);
       setShowModal(true);
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      setError(error.message || 'No se pudo actualizar el perfil.');
     }
   };
 
@@ -53,7 +53,7 @@ export default function Profile() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatar(reader.result); // Guarda la imagen en formato DataURL
+        setAvatar(reader.result); // Mostramos la vista previa
       };
       reader.readAsDataURL(file);
     }

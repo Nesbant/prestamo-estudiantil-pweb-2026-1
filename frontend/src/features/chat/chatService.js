@@ -1,27 +1,50 @@
-import { apiRequest } from '../../lib/apiClient';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = `${API_BASE_URL}/chats`;
 
-export const getConversations = async () => {
-  const response = await apiRequest('/conversations');
-  return response.data || [];
-};
+async function handleResponse(response) {
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || response.statusText);
+  }
+  return data.data;
+}
 
-export const createConversation = async ({ postId, otherUserId }) => {
-  const response = await apiRequest('/conversations', {
-    method: 'POST',
-    body: JSON.stringify({ postId: String(postId), otherUserId: String(otherUserId) }),
+function authHeaders(token, extraHeaders = {}) {
+  return {
+    ...extraHeaders,
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+export async function getChats(token) {
+  const response = await fetch(API_URL, {
+    headers: authHeaders(token),
   });
-  return response.data;
-};
+  return handleResponse(response);
+}
 
-export const getConversationMessages = async (conversationId) => {
-  const response = await apiRequest(`/conversations/${conversationId}/messages`);
-  return response.data || [];
-};
-
-export const sendConversationMessage = async (conversationId, text) => {
-  const response = await apiRequest(`/conversations/${conversationId}/messages`, {
+export async function findOrCreateChat(recipientId, token, reference) {
+  const response = await fetch(API_URL, {
     method: 'POST',
-    body: JSON.stringify({ text }),
+    headers: authHeaders(token, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ recipientId, reference }),
   });
-  return response.data;
-};
+  return handleResponse(response);
+}
+
+export async function getChatById(chatId, token) {
+  const response = await fetch(`${API_URL}/${chatId}`, {
+    headers: authHeaders(token),
+  });
+  return handleResponse(response);
+}
+
+export async function sendMessage(chatId, content, token) {
+  const response = await fetch(`${API_URL}/${chatId}/messages`, {
+    method: 'POST',
+    headers: authHeaders(token, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ content }),
+  });
+  return handleResponse(response);
+}

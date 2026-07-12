@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -19,6 +19,11 @@ import { PostContext } from '../features/posts/PostContext';
 import { findBackendPostForChat } from '../features/posts/postService';
 import { useAuth } from '../features/auth/AuthContext';
 import Modal from '../components/ui/Modal';
+import {
+  getPostById,
+  toggleFavorite as toggleFavoriteApi,
+} from '../features/posts/postService';
+import { findOrCreateChat } from '../features/chat/chatService';
 
 // Mini componente para las tarjetas de información a la izquierda
 const InfoCard = ({ icon, label, value }) => (
@@ -50,17 +55,44 @@ const GuaranteeBox = () => (
 
 export default function PostPage() {
   const { posts, setPosts } = useContext(PostContext);
-  const { currentUser } = useAuth();
+  const { currentUser, token } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const [postDetails, setPostDetails] = useState(null);
+  const [loadingPost, setLoadingPost] = useState(true);
+  const [error, setError] = useState('');
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [openingChat, setOpeningChat] = useState(false);
   const [chatError, setChatError] = useState('');
 
-  const post = posts.find((p) => p.id === Number(id));
+  const post = postDetails || posts.find((p) => p.id === id);
+  const author = post?.author || {};
+  const authorName = author.name || 'Usuario';
+  const authorAvatar =
+    author.avatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=00543D&color=fff`;
+
+  useEffect(() => {
+    async function loadPost() {
+      try {
+        setLoadingPost(true);
+        const data = await getPostById(id, token);
+        setPostDetails(data);
+      } catch {
+        setError('No se pudo cargar la publicacion.');
+      } finally {
+        setLoadingPost(false);
+      }
+    }
+    loadPost();
+  }, [id, token]);
+
+  if (loadingPost) {
+    return <p className='p-8 text-center text-gray-600'>Cargando...</p>;
+  }
 
   if (!post) {
     return (
@@ -95,6 +127,14 @@ export default function PostPage() {
   };
 
   const toggleFavorite = () => {
+    toggleFavoriteApi(post.id, token).catch(() => {
+      setError('No se pudo actualizar favoritos.');
+    });
+    setPostDetails((currentPost) =>
+      currentPost
+        ? { ...currentPost, isFavorite: !currentPost.isFavorite }
+        : currentPost,
+    );
     setPosts(
       posts.map((p) =>
         p.id === post.id ? { ...p, isFavorite: !p.isFavorite } : p,
@@ -138,6 +178,27 @@ export default function PostPage() {
 
   const isMyPost = currentUser && currentUser.id === post.authorId;
 
+  const openChat = async () => {
+    try {
+      if (post.authorId) {
+        const chat = await findOrCreateChat(post.authorId, token, post.title);
+        navigate('/chat', {
+          state: {
+            newContact: {
+              id: post.authorId,
+              chatId: chat.id,
+              name: authorName,
+              avatar: authorAvatar,
+              item: post.title,
+            },
+          },
+        });
+      }
+    } catch {
+      setError('No se pudo iniciar el chat.');
+    }
+  };
+
   let badgeColor = isPrestando
     ? 'bg-green-100 text-green-800'
     : isBuscando
@@ -157,6 +218,11 @@ export default function PostPage() {
       >
         <FontAwesomeIcon icon={faArrowLeft} /> Volver
       </button>
+      {error && (
+        <div className='p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-lg'>
+          {error}
+        </div>
+      )}
 
       <div className='grid grid-cols-1 gap-8 md:grid-cols-12'>
         {/* Columna Izquierda: Imagen y Tarjetas de Referencia */}
@@ -226,13 +292,13 @@ export default function PostPage() {
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-3'>
                 <img
-                  src={post.authorAvatar}
+                  src={authorAvatar}
                   alt='Avatar'
                   className='object-cover w-12 h-12 border border-gray-200 rounded-full'
                 />
                 <div className='flex flex-col'>
                   <span className='font-semibold text-gray-800'>
-                    {post.authorName}
+                    {authorName}
                   </span>
                   <div className='flex items-center gap-1 text-sm text-gray-500'>
                     <FontAwesomeIcon
@@ -301,9 +367,8 @@ export default function PostPage() {
                     </button>
                   )}
                   <button
-                    onClick={handleOpenChat}
-                    disabled={openingChat}
-                    className='flex items-center justify-center w-full gap-2 py-3.5 font-semibold text-gray-700 transition-colors bg-white border border-gray-300 cursor-pointer rounded-xl hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60'
+                    onClick={openChat}
+                    className='flex items-center justify-center w-full gap-2 py-3.5 font-semibold text-gray-700 transition-colors bg-white border border-gray-300 cursor-pointer rounded-xl hover:bg-gray-50'
                   >
                     <FontAwesomeIcon icon={faCommentDots} />{' '}
                     {openingChat ? 'Abriendo chat...' : 'Enviar mensaje'}
@@ -319,7 +384,7 @@ export default function PostPage() {
       {showRequestModal && (
         <Modal
           titulo='Confirmar Solicitud'
-          mensaje={`¿Estás seguro que deseas solicitar el préstamo de "${post.title}" a ${post.authorName}?`}
+          mensaje={`¿Estás seguro que deseas solicitar el préstamo de "${post.title}" a ${authorName}?`}
           confirmText='Sí, solicitar'
           onConfirm={handleRequestConfirm}
           onClose={() => setShowRequestModal(false)}
@@ -330,7 +395,7 @@ export default function PostPage() {
       {showOfferModal && (
         <Modal
           titulo='Ofrecer Artículo'
-          mensaje={`¿Deseas ofrecer tu artículo "${post.title}" a ${post.authorName}?`}
+          mensaje={`¿Deseas ofrecer tu artículo "${post.title}" a ${authorName}?`}
           confirmText='Sí, ofrecer'
           onConfirm={handleOfferConfirm}
           onClose={() => setShowOfferModal(false)}

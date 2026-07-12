@@ -8,7 +8,7 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import EmptyState from '../components/ui/EmptyState';
 
 export default function ExplorePage() {
-  const { posts, setPosts } = useContext(PostContext);
+  const { posts } = useContext(PostContext);
   const { currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,14 +21,6 @@ export default function ExplorePage() {
   const postsPerPage = 12;
 
   const isMounted = useRef(false);
-
-  const toggleFavorite = (id) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === id ? { ...post, isFavorite: !post.isFavorite } : post,
-      ),
-    );
-  };
 
   // Búsqueda y filtros
   const filteredPosts = posts.filter((post) => {
@@ -122,7 +114,6 @@ export default function ExplorePage() {
               <Post
                 key={post.id}
                 post={post}
-                onToggleFavorite={() => toggleFavorite(post.id)}
                 isMyPost={post.authorId === currentUser?.id}
               />
             ))}

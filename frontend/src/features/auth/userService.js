@@ -1,85 +1,58 @@
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
-const TOKEN_KEY = 'campuslend_access_token';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = `${API_BASE_URL}/auth`;
 
-export const getAccessToken = () => sessionStorage.getItem(TOKEN_KEY);
-
-const saveAccessToken = (token) => {
-  if (token) sessionStorage.setItem(TOKEN_KEY, token);
-};
-
-const clearSession = () => sessionStorage.removeItem(TOKEN_KEY);
-
-async function apiRequest(path, options = {}) {
-  const token = getAccessToken();
-  let response;
-
-  try {
-    response = await fetch(`${API_URL}${path}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      },
-    });
-  } catch {
-    throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.');
-  }
-
-  const payload = await response.json().catch(() => ({}));
+async function handleResponse(response) {
+  const data = await response.json();
   if (!response.ok) {
-    if (response.status === 401 && token) clearSession();
-    const error = new Error(payload.message || 'Ocurrió un error al procesar la solicitud.');
-    error.status = response.status;
-    error.code = payload.code;
+    // Propagamos el mensaje y el código de error del backend
+    const error = new Error(
+      data.message || 'Ocurrió un error en la solicitud.',
+    );
+    error.code = data.code;
     throw error;
   }
-  return payload;
+  // El backend devuelve el objeto de respuesta en una propiedad 'data'
+  return data.data;
 }
 
-export const registerUser = async (userData) => {
-  try {
-    const response = await apiRequest('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-    return { ok: true, message: response.message };
-  } catch (error) {
-    return { ok: false, message: error.message };
-  }
-};
-
-export const loginUser = async (email, password) => {
-  try {
-    const response = await apiRequest('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    saveAccessToken(response.data.accessToken);
-    return { ok: true, user: response.data.user };
-  } catch (error) {
-    return { ok: false, message: error.message };
-  }
-};
-
-export const getCurrentUser = async () => {
-  if (!getAccessToken()) return null;
-  try {
-    const response = await apiRequest('/auth/me');
-    return response.data;
-  } catch {
-    clearSession();
-    return null;
-  }
-};
-
-export const updateCurrentUser = async (updatedData) => {
-  const response = await apiRequest('/auth/me', {
-    method: 'PATCH',
-    body: JSON.stringify(updatedData),
+export async function registerUser(userData) {
+  const response = await fetch(`${API_URL}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData),
   });
-  saveAccessToken(response.data.accessToken);
-  return response.data.user;
-};
+  return handleResponse(response);
+}
 
-export const logoutUser = async () => clearSession();
+export async function loginUser(credentials) {
+  const response = await fetch(`${API_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  });
+  return handleResponse(response);
+}
+
+export async function getProfile(token) {
+  const response = await fetch(`${API_URL}/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function updateUser(profileData, token) {
+  const response = await fetch(`${API_URL}/me`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData),
+  });
+  return handleResponse(response);
+}
+
+export async function getInstitutions() {
+  const response = await fetch(`${API_BASE_URL}/institutions`);
+  return handleResponse(response);
+}

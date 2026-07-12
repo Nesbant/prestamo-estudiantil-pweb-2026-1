@@ -12,7 +12,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Post from './Post';
 import { PostContext } from './PostContext';
-import { useAuth } from '../auth/AuthContext';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
@@ -20,7 +19,6 @@ import Modal from '../../components/ui/Modal';
 
 export default function PostForm() {
   const { posts, handleAddPost, handleUpdatePost } = useContext(PostContext);
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
@@ -39,7 +37,7 @@ export default function PostForm() {
 
   useEffect(() => {
     if (isEditing && posts.length > 0) {
-      const postToEdit = posts.find((p) => p.id === Number(id));
+      const postToEdit = posts.find((p) => p.id === id);
       if (postToEdit) {
         setType(postToEdit.status === 'requesting' ? 'request' : 'lend');
         setTitle(postToEdit.title);
@@ -57,53 +55,33 @@ export default function PostForm() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImageUrl(reader.result); // Guarda la imagen en formato DataURL
+        setImageUrl(reader.result);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const finalImageUrl =
       imageUrl ||
       `https://placehold.co/200x200?text=${encodeURIComponent(category || 'Articulo')}`;
 
+    const postData = {
+      type: type, // 'lend' o 'request'
+      category: category || 'Otros',
+      title: title || 'Sin título',
+      description: description || 'Sin descripción',
+      loanDuration: loanDuration || 'A coordinar',
+      pickupLocation: pickupLocation || 'A coordinar',
+      imageUrl: finalImageUrl,
+    };
+
     if (isEditing) {
-      const existingPost = posts.find((p) => p.id === Number(id));
-      const updatedPost = {
-        ...existingPost,
-        status: type === 'lend' ? 'lending' : 'requesting',
-        category: category || 'Otros',
-        title: title || 'Sin título',
-        description: description || 'Sin descripción',
-        loanDuration: loanDuration || 'A coordinar',
-        pickupLocation: pickupLocation || 'A coordinar',
-        imageUrl: finalImageUrl,
-      };
-      handleUpdatePost(updatedPost);
+      // El 'type' se maneja en el backend, aquí solo pasamos los datos
+      const updatedPost = await handleUpdatePost(id, postData);
       setCreatedPost(updatedPost);
     } else {
-      const newPost = {
-        id: Date.now(),
-        status: type === 'lend' ? 'lending' : 'requesting',
-        category: category || 'Otros',
-        title: title || 'Sin título',
-        description: description || 'Sin descripción',
-        loanDuration: loanDuration || 'A coordinar',
-        pickupLocation: pickupLocation || 'A coordinar',
-        imageUrl: finalImageUrl,
-        views: 0,
-        isFavorite: false,
-        timeAgo: 'hace un momento',
-        authorId: currentUser?.id,
-        authorName: currentUser?.name || 'Usuario Anónimo',
-        authorAvatar:
-          currentUser?.avatar ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'U')}&background=00543D&color=fff`,
-        rating: 5.0,
-        completedLoans: 0,
-      };
-      handleAddPost(newPost);
+      const newPost = await handleAddPost(postData);
       setCreatedPost(newPost);
     }
     setIsSuccess(true);

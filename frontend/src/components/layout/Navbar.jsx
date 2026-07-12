@@ -20,6 +20,7 @@ export default function Navbar() {
     location.pathname === '/activity' ||
     location.pathname === '/create' ||
     location.pathname.startsWith('/edit');
+  const isChat = location.pathname === '/chat';
 
   return (
     <nav className='sticky top-0 z-40 mb-8 bg-white border-b border-gray-500 shadow-sm'>
@@ -44,6 +45,15 @@ export default function Navbar() {
             }}
           >
             Explorar
+          </NavButton>
+          <NavButton
+            isActive={isChat}
+            onClick={() => {
+              navigate('/chat');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            Chat
           </NavButton>
           <NavButton
             isActive={isActividad}

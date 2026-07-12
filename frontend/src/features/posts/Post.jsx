@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -13,33 +13,32 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import Modal from '../../components/ui/Modal';
+import { useAuth } from '../auth/AuthContext';
+import { PostContext } from './PostContext';
 
 const Post = ({
   post,
-  onToggleFavorite,
   onDeletePost,
+  onToggleFavorite,
   isPreview = false,
   isMyPost = false,
 }) => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const { handleToggleFavorite } = useContext(PostContext);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isPrestando = post.status === 'lending';
   const isBuscando = post.status === 'requesting';
   const isPrestadoActualmente = post.status === 'lent';
 
-  let badgeColor = '';
-  let statusText = '';
-
-  if (isPrestando) {
-    badgeColor = 'bg-[#00543D] text-white';
-    statusText = 'Prestando';
-  } else if (isBuscando) {
-    badgeColor = 'bg-blue-600 text-white';
-    statusText = 'Buscando';
-  } else {
-    badgeColor = 'bg-gray-800 text-white';
-    statusText = 'Prestado actualmente';
-  }
+  const { badgeColor, statusText } = isPrestando
+    ? { badgeColor: 'bg-[#00543D] text-white', statusText: 'Prestando' }
+    : isBuscando
+      ? { badgeColor: 'bg-blue-600 text-white', statusText: 'Buscando' }
+      : {
+          badgeColor: 'bg-gray-800 text-white',
+          statusText: 'Prestado actualmente',
+        };
 
   const isDisabled = isPrestadoActualmente;
 
@@ -67,21 +66,27 @@ const Post = ({
           </div>
 
           {/* Favorite Button flotante */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavorite();
-            }}
-            className='absolute p-2.5 transition-colors bg-white/90 rounded-full shadow-sm top-3 right-3 hover:bg-white z-10'
-            title={
-              post.isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'
-            }
-          >
-            <FontAwesomeIcon
-              icon={post.isFavorite ? faStarSolid : faStarRegular}
-              className={`text-lg ${post.isFavorite ? 'text-yellow-400' : 'text-gray-400'}`}
-            />
-          </button>
+          {currentUser && !isMyPost && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onToggleFavorite) {
+                  onToggleFavorite(post.id);
+                } else {
+                  handleToggleFavorite(post.id);
+                }
+              }}
+              className='absolute p-2.5 transition-colors bg-white/90 rounded-full shadow-sm top-3 right-3 hover:bg-white z-10'
+              title={
+                post.isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'
+              }
+            >
+              <FontAwesomeIcon
+                icon={post.isFavorite ? faStarSolid : faStarRegular}
+                className={`text-lg ${post.isFavorite ? 'text-yellow-400' : 'text-gray-400'}`}
+              />
+            </button>
+          )}
         </div>
 
         {/* Bottom: Content */}
@@ -126,14 +131,14 @@ const Post = ({
               <div className='flex items-center gap-2'>
                 <img
                   src={
-                    post.authorAvatar ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(post.authorName || 'U')}&background=00543D&color=fff`
+                    post.author?.avatar ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'U')}&background=00543D&color=fff`
                   }
-                  alt={post.authorName}
+                  alt={post.author?.name}
                   className='object-cover border border-gray-200 rounded-full w-7 h-7'
                 />
                 <span className='text-xs font-medium text-gray-700 truncate max-w-25'>
-                  {post.authorName || 'Usuario'}
+                  {post.author?.name || 'Usuario'}
                 </span>
               </div>
               {post.pickupLocation && (

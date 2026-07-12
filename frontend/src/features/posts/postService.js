@@ -1,46 +1,86 @@
-import { apiRequest } from '../../lib/apiClient';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = `${API_BASE_URL}/posts`;
 
-export const getBackendPosts = async (filters = {}) => {
-  const params = new URLSearchParams();
+async function handleResponse(response) {
+  const data = await response.json();
+  if (!response.ok) {
+    const error = (data && data.message) || response.statusText;
+    throw new Error(error);
+  }
+  return data.data;
+}
 
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && String(value).trim()) {
-      params.set(key, String(value).trim());
-    }
+function authHeaders(token, extraHeaders = {}) {
+  return token
+    ? { ...extraHeaders, Authorization: `Bearer ${token}` }
+    : extraHeaders;
+}
+
+export async function getPosts(filters = {}, token) {
+  const query = new URLSearchParams(filters).toString();
+  const response = await fetch(`${API_URL}?${query}`, {
+    headers: authHeaders(token),
   });
+  return handleResponse(response);
+}
 
-  const query = params.toString();
-  const response = await apiRequest(`/posts${query ? `?${query}` : ''}`);
-  return response.data || [];
-};
+export async function getMyPosts(token) {
+  const response = await fetch(`${API_URL}/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
 
-const normalizeSearchValue = (value) =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]+/g, ' ')
-    .trim()
-    .toLowerCase();
+export async function getPostById(id, token) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    headers: authHeaders(token),
+  });
+  return handleResponse(response);
+}
 
-export const findBackendPostForChat = async (post) => {
-  const candidates = await getBackendPosts();
-  const normalizedTitle = normalizeSearchValue(post.title);
-  const normalizedAuthorName = normalizeSearchValue(post.authorName);
+export async function createPost(postData, token) {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(postData),
+  });
+  return handleResponse(response);
+}
 
-  return (
-    candidates.find(
-      (candidate) =>
-        normalizeSearchValue(candidate.title) === normalizedTitle &&
-        normalizeSearchValue(candidate.authorName) === normalizedAuthorName,
-    ) ||
-    candidates.find(
-      (candidate) => normalizeSearchValue(candidate.title) === normalizedTitle,
-    ) ||
-    candidates.find(
-      (candidate) =>
-        normalizeSearchValue(candidate.title).includes(normalizedTitle) ||
-        normalizedTitle.includes(normalizeSearchValue(candidate.title)),
-    ) ||
-    null
-  );
-};
+export async function updatePost(id, postData, token) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(postData),
+  });
+  return handleResponse(response);
+}
+
+export async function deletePost(id, token) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const data = await response.json();
+    const error = (data && data.message) || response.statusText;
+    throw new Error(error);
+  }
+  return { success: true };
+}
+
+export async function toggleFavorite(id, token) {
+  const response = await fetch(`${API_URL}/${id}/favorite`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
+}

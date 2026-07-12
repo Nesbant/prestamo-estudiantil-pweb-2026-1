@@ -26,16 +26,12 @@ export default function Login() {
       return;
     }
 
-    setSubmitting(true);
-    const result = await loginUser(email, password);
-    setSubmitting(false);
-
-    if (!result.ok) {
-      setError(result.message);
-      return;
+    try {
+      const authData = await loginUser({ email, password });
+      handleLogin(authData);
+    } catch (error) {
+      setError(error.message || 'Ocurrió un error inesperado.');
     }
-
-    handleLogin(result.user);
   };
 
   return (
