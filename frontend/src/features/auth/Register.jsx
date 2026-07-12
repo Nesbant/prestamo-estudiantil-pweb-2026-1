@@ -19,6 +19,7 @@ export default function Register() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [institutionsData, setInstitutionsData] = useState([]);
   const [loadingInstitutions, setLoadingInstitutions] = useState(true);
@@ -236,14 +237,14 @@ export default function Register() {
 
         <button
           type='submit'
-          disabled={!acceptTerms}
+          disabled={!acceptTerms || submitting}
           className={`h-12 w-full rounded-md font-semibold text-white transition-colors ${
-            acceptTerms
+            acceptTerms && !submitting
               ? 'bg-[#00543D] hover:bg-[#004231] cursor-pointer'
               : 'bg-gray-400 cursor-not-allowed'
           }`}
         >
-          Registrarse →
+          {submitting ? 'Registrando...' : 'Registrarse →'}
         </button>
 
         <p className='mt-6 text-sm text-center text-gray-500'>

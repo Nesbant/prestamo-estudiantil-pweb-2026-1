@@ -14,6 +14,19 @@ import {
   findOrCreateChat,
 } from '../features/chat/chatService';
 
+const normalizeMessage = (message, currentUserId) => ({
+	id: String(message.id),
+	sender: String(message.senderId) === String(currentUserId) ? "me" : "other",
+	text: message.text || "",
+	time: formatTime(message.createdAt),
+	createdAt: message.createdAt,
+});
+
+const upsertConversation = (conversations, conversation) => [
+	conversation,
+	...conversations.filter((item) => item.id !== conversation.id),
+];
+
 export default function ChatPage() {
   const location = useLocation();
   const navigate = useNavigate();

@@ -16,6 +16,7 @@ import {
   faStar as faStarRegular,
 } from '@fortawesome/free-regular-svg-icons';
 import { PostContext } from '../features/posts/PostContext';
+import { findBackendPostForChat } from '../features/posts/postService';
 import { useAuth } from '../features/auth/AuthContext';
 import Modal from '../components/ui/Modal';
 import {
@@ -64,6 +65,8 @@ export default function PostPage() {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [openingChat, setOpeningChat] = useState(false);
+  const [chatError, setChatError] = useState('');
 
   const post = postDetails || posts.find((p) => p.id === id);
   const author = post?.author || {};
@@ -137,6 +140,37 @@ export default function PostPage() {
         p.id === post.id ? { ...p, isFavorite: !p.isFavorite } : p,
       ),
     );
+  };
+
+  const handleOpenChat = async () => {
+    if (openingChat) return;
+
+    setOpeningChat(true);
+    setChatError('');
+
+    try {
+      const backendPost = await findBackendPostForChat(post);
+
+      if (!backendPost) {
+        setChatError(
+          'Esta publicación todavía no existe en el backend. No se puede abrir el chat real.',
+        );
+        return;
+      }
+
+      navigate('/chat', {
+        state: {
+          startConversation: {
+            postId: backendPost.id,
+            otherUserId: backendPost.authorId,
+          },
+        },
+      });
+    } catch (error) {
+      setChatError(error.message);
+    } finally {
+      setOpeningChat(false);
+    }
   };
 
   const isPrestando = post.status === 'lending';
@@ -291,8 +325,14 @@ export default function PostPage() {
           <div className='p-6 bg-white border border-gray-200 shadow-sm rounded-2xl'>
             <GuaranteeBox />
 
-            <div className='flex flex-col gap-3'>
-              {isMyPost ? (
+                <div className='flex flex-col gap-3'>
+                  {chatError && (
+                    <p className='rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700'>
+                      {chatError}
+                    </p>
+                  )}
+
+                  {isMyPost ? (
                 <button
                   onClick={() => navigate(`/edit/${post.id}`)}
                   className='flex items-center justify-center w-full gap-2 py-3.5 font-semibold text-gray-800 transition-colors bg-gray-100 cursor-pointer rounded-xl hover:bg-gray-200'
@@ -330,7 +370,8 @@ export default function PostPage() {
                     onClick={openChat}
                     className='flex items-center justify-center w-full gap-2 py-3.5 font-semibold text-gray-700 transition-colors bg-white border border-gray-300 cursor-pointer rounded-xl hover:bg-gray-50'
                   >
-                    <FontAwesomeIcon icon={faCommentDots} /> Enviar mensaje
+                    <FontAwesomeIcon icon={faCommentDots} />{' '}
+                    {openingChat ? 'Abriendo chat...' : 'Enviar mensaje'}
                   </button>
                 </>
               )}
