@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -6,157 +6,112 @@ import {
   faSearch,
   faInfoCircle,
 } from '@fortawesome/free-solid-svg-icons';
-
-// Mockups de conversaciones simulando interacciones por distintos artículos
-const mockContacts = [
-  {
-    id: 1,
-    name: 'Carlos Mendoza',
-    item: 'Calculadora Científica Casio fx-991',
-    avatar: 'https://i.pravatar.cc/150?u=carlos',
-    lastMessage: 'Sí, nos vemos en la cafetería.',
-    time: '10:30 AM',
-    unread: 0,
-  },
-  {
-    id: 2,
-    name: 'Lucía Fernández',
-    item: 'Libro de Cálculo Diferencial',
-    avatar: 'https://i.pravatar.cc/150?u=lucia',
-    lastMessage: '¿Aún lo tienes disponible?',
-    time: '09:15 AM',
-    unread: 2,
-  },
-  {
-    id: 3,
-    name: 'Martín Suárez',
-    item: 'Bata de Laboratorio Talla M',
-    avatar: 'https://i.pravatar.cc/150?u=martin',
-    lastMessage: 'Gracias por el préstamo!',
-    time: 'Ayer',
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: 'Ana Gómez',
-    item: 'Laptop HP (Para exposición)',
-    avatar: 'https://i.pravatar.cc/150?u=ana',
-    lastMessage: 'Te lo devuelvo a las 5 PM.',
-    time: 'Ayer',
-    unread: 0,
-  },
-  {
-    id: 5,
-    name: 'Roberto Díaz',
-    item: 'Regla T y Escuadras',
-    avatar: 'https://i.pravatar.cc/150?u=roberto',
-    lastMessage: 'Perfecto, te espero en el pabellón C.',
-    time: 'Mar 12',
-    unread: 0,
-  },
-];
-
-// Mockups del historial de mensajes para algunas de las conversaciones
-const initialMessages = {
-  1: [
-    {
-      id: 1,
-      sender: 'other',
-      text: 'Hola, ¿qué tal? Quería saber si aún prestas la calculadora.',
-      time: '10:00 AM',
-    },
-    {
-      id: 2,
-      sender: 'me',
-      text: '¡Hola! Sí, claro que sí. ¿Para cuándo la necesitas?',
-      time: '10:15 AM',
-    },
-    {
-      id: 3,
-      sender: 'other',
-      text: 'Para hoy a las 11. ¿Podemos vernos en la cafetería central?',
-      time: '10:25 AM',
-    },
-    {
-      id: 4,
-      sender: 'me',
-      text: 'Me parece bien. Llevo una polera negra.',
-      time: '10:28 AM',
-    },
-    {
-      id: 5,
-      sender: 'other',
-      text: 'Sí, nos vemos en la cafetería.',
-      time: '10:30 AM',
-    },
-  ],
-  2: [
-    {
-      id: 1,
-      sender: 'other',
-      text: 'Hola! Vi tu publicación del libro de cálculo.',
-      time: '09:10 AM',
-    },
-    {
-      id: 2,
-      sender: 'other',
-      text: '¿Aún lo tienes disponible?',
-      time: '09:15 AM',
-    },
-  ],
-  3: [
-    {
-      id: 1,
-      sender: 'me',
-      text: 'Hola Martín, aquí te devuelvo la bata, muchas gracias.',
-      time: 'Ayer, 4:00 PM',
-    },
-    {
-      id: 2,
-      sender: 'other',
-      text: 'De nada, espero te haya servido.',
-      time: 'Ayer, 4:15 PM',
-    },
-    {
-      id: 3,
-      sender: 'me',
-      text: 'Muchísimo. ¡Gracias por el préstamo!',
-      time: 'Ayer, 4:30 PM',
-    },
-  ],
-};
+import { useAuth } from '../features/auth/AuthContext';
+import {
+  getChats,
+  getChatById,
+  sendMessage,
+  findOrCreateChat,
+} from '../features/chat/chatService';
 
 export default function ChatPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeChatId, setActiveChatId] = useState(1);
-  const [contacts, setContacts] = useState(mockContacts);
+  const { currentUser, token } = useAuth();
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [contacts, setContacts] = useState([]);
   const [tempContact, setTempContact] = useState(null);
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState({});
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState('');
 
   // Manejar el contacto nuevo que viene por la navegación desde un artículo
   useEffect(() => {
-    const incoming = location.state?.newContact;
-    if (incoming) {
-      const exists = contacts.find((c) => c.id === incoming.id);
+    async function handleIncomingContact() {
+      const incoming = location.state?.newContact;
+      if (!incoming) return;
+
+      const exists = contacts.find((c) => c.id === incoming.chatId);
       if (exists) {
         setActiveChatId(exists.id);
       } else {
+        let chatId = incoming.chatId;
+        if (!chatId) {
+          try {
+            const chat = await findOrCreateChat(
+              incoming.id,
+              token,
+              incoming.item,
+            );
+            chatId = chat.id;
+          } catch {
+            setError('No se pudo iniciar el chat.');
+            return;
+          }
+        }
+
         setTempContact({
           ...incoming,
+          id: chatId,
           time: 'Ahora',
           unread: 0,
           lastMessage: 'Escribe el primer mensaje...',
         });
-        setActiveChatId(incoming.id);
+        setActiveChatId(chatId);
       }
+
       // Limpiamos el historial del router para que no salte al actualizar estados
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, contacts, location.pathname, navigate]);
+
+    handleIncomingContact();
+  }, [location.state, contacts, location.pathname, navigate, token]);
+
+  useEffect(() => {
+    async function loadChats() {
+      try {
+        const chats = await getChats(token);
+        const apiContacts = chats.map((chat) => {
+          const participant = chat.participants?.[0] || {};
+          const lastMessage = chat.messages?.[0];
+          return {
+            id: chat.id,
+            participantId: participant.id,
+            name: participant.name || 'Usuario',
+            item: chat.reference || 'Conversación',
+            avatar:
+              participant.avatar ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(participant.name || 'U')}&background=00543D&color=fff`,
+            lastMessage: lastMessage?.content || 'Sin mensajes todavía',
+            time: lastMessage?.createdAt
+              ? new Date(lastMessage.createdAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : 'Ahora',
+            unread: 0,
+          };
+        });
+
+        if (apiContacts.length > 0) {
+          setContacts(apiContacts);
+          if (activeChatId && apiContacts.some((c) => c.id === activeChatId)) {
+            setActiveChatId(activeChatId);
+          } else {
+            setActiveChatId(apiContacts[0].id);
+          }
+        }
+      } catch {
+        setError('No se pudieron cargar tus chats.');
+      }
+    }
+
+    if (token) {
+      loadChats();
+    }
+  }, [token, activeChatId]);
 
   const displayContacts = tempContact
     ? [tempContact, ...contacts].filter(
@@ -171,49 +126,82 @@ export default function ChatPage() {
   );
 
   const activeChat = displayContacts.find((c) => c.id === activeChatId);
-  const currentMessages = messages[activeChatId] || [];
+  const currentMessages = useMemo(
+    () => messages[activeChatId] || [],
+    [messages, activeChatId],
+  );
+
+  useEffect(() => {
+    async function loadChatMessages() {
+      if (!activeChatId) return;
+      try {
+        const chatDetails = await getChatById(activeChatId, token);
+        setMessages((prev) => ({
+          ...prev,
+          [activeChatId]: chatDetails.messages.map((msg) => ({
+            id: msg.id,
+            sender: msg.sender?.id === currentUser?.id ? 'me' : 'other',
+            text: msg.content,
+            time: new Date(msg.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          })),
+        }));
+      } catch {
+        // No hacemos nada si falla la carga de mensajes en este momento.
+      }
+    }
+
+    loadChatMessages();
+  }, [activeChatId, token, currentUser?.id]);
 
   // Auto-scroll al final cuando se envía un mensaje
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currentMessages]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !activeChatId) return;
 
-    const newMsgObj = {
-      id: Date.now(),
-      sender: 'me',
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    };
+    const content = newMessage.trim();
 
-    setMessages((prev) => ({
-      ...prev,
-      [activeChatId]: [...(prev[activeChatId] || []), newMsgObj],
-    }));
+    try {
+      const sentMessage = await sendMessage(activeChatId, content, token);
+      const newMsgObj = {
+        id: sentMessage.id,
+        sender: 'me',
+        text: sentMessage.content,
+        time: new Date(sentMessage.createdAt).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      };
 
-    // Si es un contacto temporal, guardarlo en la lista permanente
-    if (tempContact && activeChatId === tempContact.id) {
-      setContacts((prev) => [
-        { ...tempContact, lastMessage: newMessage },
+      setMessages((prev) => ({
         ...prev,
-      ]);
-      setTempContact(null);
-    } else {
-      // Actualizar el último mensaje del contacto existente en la barra lateral
-      setContacts((prev) =>
-        prev.map((c) =>
-          c.id === activeChatId ? { ...c, lastMessage: newMessage } : c,
-        ),
-      );
-    }
+        [activeChatId]: [...(prev[activeChatId] || []), newMsgObj],
+      }));
 
-    setNewMessage('');
+      if (tempContact && activeChatId === tempContact.id) {
+        setContacts((prev) => {
+          const filteredPrev = prev.filter((c) => c.id !== tempContact.id);
+          return [{ ...tempContact, lastMessage: content }, ...filteredPrev];
+        });
+        setTempContact(null);
+      } else {
+        setContacts((prev) =>
+          prev.map((c) =>
+            c.id === activeChatId ? { ...c, lastMessage: content } : c,
+          ),
+        );
+      }
+
+      setNewMessage('');
+    } catch {
+      setError('No se pudo enviar el mensaje.');
+    }
   };
 
   return (
@@ -222,6 +210,11 @@ export default function ChatPage() {
         {/* Sidebar - Lista de Contactos */}
         <div className='flex flex-col w-full border-r border-gray-200 md:w-80 lg:w-96 bg-gray-50/50 shrink-0'>
           <div className='p-4 border-b border-gray-200'>
+            {error && (
+              <div className='p-2 mb-3 text-xs text-red-700 bg-red-100 rounded-lg'>
+                {error}
+              </div>
+            )}
             <div className='relative'>
               <FontAwesomeIcon
                 icon={faSearch}

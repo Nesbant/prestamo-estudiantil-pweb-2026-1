@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:4000/api/auth';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = `${API_BASE_URL}/auth`;
 
 async function handleResponse(response) {
   const data = await response.json();
@@ -43,14 +44,15 @@ export async function updateUser(profileData, token) {
   const response = await fetch(`${API_URL}/me`, {
     method: 'PATCH',
     headers: {
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: profileData,
+    body: JSON.stringify(profileData),
   });
   return handleResponse(response);
 }
 
 export async function getInstitutions() {
-  const response = await fetch('http://localhost:4000/api/institutions');
+  const response = await fetch(`${API_BASE_URL}/institutions`);
   return handleResponse(response);
 }

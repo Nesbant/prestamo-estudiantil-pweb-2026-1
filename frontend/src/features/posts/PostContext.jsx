@@ -74,6 +74,7 @@ export const PostProvider = ({ children }) => {
     <PostContext.Provider
       value={{
         posts,
+        setPosts,
         handleAddPost,
         handleDeletePost,
         handleUpdatePost,

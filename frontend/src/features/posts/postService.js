@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:4000/api/posts';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_URL = `${API_BASE_URL}/posts`;
 
 async function handleResponse(response) {
   const data = await response.json();
@@ -9,14 +10,31 @@ async function handleResponse(response) {
   return data.data;
 }
 
-export async function getPosts(filters = {}) {
+function authHeaders(token, extraHeaders = {}) {
+  return token
+    ? { ...extraHeaders, Authorization: `Bearer ${token}` }
+    : extraHeaders;
+}
+
+export async function getPosts(filters = {}, token) {
   const query = new URLSearchParams(filters).toString();
-  const response = await fetch(`${API_URL}?${query}`);
+  const response = await fetch(`${API_URL}?${query}`, {
+    headers: authHeaders(token),
+  });
   return handleResponse(response);
 }
 
-export async function getPostById(id) {
-  const response = await fetch(`${API_URL}/${id}`);
+export async function getMyPosts(token) {
+  const response = await fetch(`${API_URL}/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function getPostById(id, token) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    headers: authHeaders(token),
+  });
   return handleResponse(response);
 }
 

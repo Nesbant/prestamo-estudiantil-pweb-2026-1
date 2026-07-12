@@ -10,7 +10,6 @@ export default function Profile() {
   const { currentUser, token, updateUser } = useAuth();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [avatarFile, setAvatarFile] = useState(null); // Para guardar el archivo
   const [avatar, setAvatar] = useState('');
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -32,15 +31,15 @@ export default function Profile() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('name', name.trim());
-    formData.append('phone', phone.trim());
-    if (avatarFile) {
-      formData.append('avatar', avatarFile);
-    }
-
     try {
-      const updatedData = await updateUserService(formData, token);
+      const updatedData = await updateUserService(
+        {
+          name: name.trim(),
+          phone: phone.trim(),
+          avatar,
+        },
+        token,
+      );
       updateUser(updatedData);
       setShowModal(true);
     } catch (error) {
@@ -51,7 +50,6 @@ export default function Profile() {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setAvatarFile(file); // Guardamos el archivo
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result); // Mostramos la vista previa

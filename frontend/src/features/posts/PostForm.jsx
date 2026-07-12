@@ -12,7 +12,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Post from './Post';
 import { PostContext } from './PostContext';
-import { useAuth } from '../auth/AuthContext';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Textarea from '../../components/ui/Textarea';
@@ -20,7 +19,6 @@ import Modal from '../../components/ui/Modal';
 
 export default function PostForm() {
   const { posts, handleAddPost, handleUpdatePost } = useContext(PostContext);
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
@@ -39,7 +37,7 @@ export default function PostForm() {
 
   useEffect(() => {
     if (isEditing && posts.length > 0) {
-      const postToEdit = posts.find((p) => p.id === Number(id));
+      const postToEdit = posts.find((p) => p.id === id);
       if (postToEdit) {
         setType(postToEdit.status === 'requesting' ? 'request' : 'lend');
         setTitle(postToEdit.title);
@@ -80,7 +78,7 @@ export default function PostForm() {
 
     if (isEditing) {
       // El 'type' se maneja en el backend, aquí solo pasamos los datos
-      const updatedPost = await handleUpdatePost(Number(id), postData);
+      const updatedPost = await handleUpdatePost(id, postData);
       setCreatedPost(updatedPost);
     } else {
       const newPost = await handleAddPost(postData);
