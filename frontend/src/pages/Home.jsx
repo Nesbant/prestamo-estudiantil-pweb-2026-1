@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Post from '../features/posts/Post';
-import { getMyPosts, deletePost } from '../features/posts/postService';
+import {
+  getMyPosts,
+  getFavoritePosts,
+  getMyRequests,
+  deletePost,
+  toggleFavorite,
+} from '../features/posts/postService';
 import { useAuth } from '../features/auth/AuthContext';
 import {
   faListCheck,
@@ -20,6 +26,8 @@ export default function Home() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const [myPosts, setMyPosts] = useState([]);
+  const [favoritePosts, setFavoritePosts] = useState([]);
+  const [requestedPosts, setRequestedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -27,8 +35,14 @@ export default function Home() {
     async function fetchMyPosts() {
       try {
         setLoading(true);
-        const data = await getMyPosts(token);
-        setMyPosts(data);
+        const [ownPosts, favorites, requests] = await Promise.all([
+          getMyPosts(token),
+          getFavoritePosts(token),
+          getMyRequests(token),
+        ]);
+        setMyPosts(ownPosts);
+        setFavoritePosts(favorites);
+        setRequestedPosts(requests);
       } catch {
         setError('No se pudieron cargar tus publicaciones.');
       } finally {
@@ -53,23 +67,24 @@ export default function Home() {
         if (post.status === 'lending') acc.countPrestando++;
         if (post.status === 'requesting') acc.countBuscando++;
         if (post.status === 'lent') acc.countPrestado++;
-        if (post.isFavorite) acc.countFavoritos++;
         return acc;
       },
       {
         countPrestando: 0,
         countBuscando: 0,
-        countPrestado: 0,
-        countFavoritos: 0,
+        countPrestado: requestedPosts.filter(
+          (post) => post.loanStatus === 'approved' || post.loanStatus === 'active',
+        ).length,
+        countFavoritos: favoritePosts.length,
       },
     );
-  }, [myPosts]);
+  }, [myPosts, favoritePosts.length, requestedPosts]);
 
   const filteredPosts = useMemo(() => {
-    return myPosts.filter(
-      (post) => activeTab === 'all' || post.status === activeTab,
-    );
-  }, [myPosts, activeTab]);
+    if (activeTab === 'favorites') return favoritePosts;
+    if (activeTab === 'requests') return requestedPosts;
+    return myPosts.filter((post) => activeTab === 'all' || post.status === activeTab);
+  }, [myPosts, favoritePosts, requestedPosts, activeTab]);
 
   // Lógica de paginación
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
@@ -101,6 +116,21 @@ export default function Home() {
       setMyPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
     } catch {
       setError('No se pudo eliminar la publicación.');
+    }
+  };
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setSearchParams({ page: totalPages }, { replace: true });
+    }
+  }, [currentPage, totalPages, setSearchParams]);
+
+  const removeFavorite = async (id) => {
+    try {
+      await toggleFavorite(id, token);
+      setFavoritePosts((posts) => posts.filter((post) => post.id !== id));
+    } catch {
+      setError('No se pudo actualizar favoritos.');
     }
   };
 
@@ -171,6 +201,18 @@ export default function Home() {
             Buscando
           </NavButton>
           <NavButton
+            isActive={activeTab === 'requests'}
+            onClick={() => handleTabChange('requests')}
+          >
+            Mis solicitudes ({requestedPosts.length})
+          </NavButton>
+          <NavButton
+            isActive={activeTab === 'favorites'}
+            onClick={() => handleTabChange('favorites')}
+          >
+            Favoritos ({favoritePosts.length})
+          </NavButton>
+          <NavButton
             isActive={activeTab === 'lent'}
             onClick={() => handleTabChange('lent')}
           >
@@ -188,7 +230,8 @@ export default function Home() {
                 key={post.id}
                 post={post}
                 onDeletePost={() => handleDeletePost(post.id)}
-                isMyPost={true}
+                isMyPost={!['favorites', 'requests'].includes(activeTab)}
+                onToggleFavorite={() => removeFavorite(post.id)}
               />
             ))}
           </section>
@@ -204,17 +247,25 @@ export default function Home() {
         !loading && (
           <EmptyState
             title={
-              myPosts.length === 0
+              activeTab === 'requests'
+                ? 'No has realizado solicitudes'
+                : activeTab === 'favorites'
+                ? 'No tienes publicaciones favoritas'
+                : myPosts.length === 0
                 ? 'Aún no tienes publicaciones'
                 : 'No hay publicaciones en esta categoría'
             }
             description={
-              myPosts.length === 0
+              activeTab === 'requests'
+                ? 'Cuando solicites un préstamo, su estado aparecerá aquí.'
+                : activeTab === 'favorites'
+                ? 'Marca publicaciones con la estrella para guardarlas aquí.'
+                : myPosts.length === 0
                 ? 'Empieza a compartir o pedir prestado artículos con otros estudiantes de tu campus.'
                 : 'Intenta cambiar de pestaña para ver el resto de tus artículos o crea uno nuevo.'
             }
             actionButton={
-              myPosts.length === 0 && (
+              !['favorites', 'requests'].includes(activeTab) && myPosts.length === 0 && (
                 <button
                   onClick={() => navigate('/create')}
                   className='flex items-center gap-2 px-6 py-2.5 font-medium text-white transition-colors bg-[#00543D] rounded-lg hover:bg-[#00402e] cursor-pointer'

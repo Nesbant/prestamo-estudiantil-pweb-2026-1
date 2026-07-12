@@ -14,19 +14,6 @@ import {
   findOrCreateChat,
 } from '../features/chat/chatService';
 
-const normalizeMessage = (message, currentUserId) => ({
-	id: String(message.id),
-	sender: String(message.senderId) === String(currentUserId) ? "me" : "other",
-	text: message.text || "",
-	time: formatTime(message.createdAt),
-	createdAt: message.createdAt,
-});
-
-const upsertConversation = (conversations, conversation) => [
-	conversation,
-	...conversations.filter((item) => item.id !== conversation.id),
-];
-
 export default function ChatPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -57,6 +44,7 @@ export default function ChatPage() {
               incoming.id,
               token,
               incoming.item,
+              incoming.postId,
             );
             chatId = chat.id;
           } catch {
@@ -110,11 +98,11 @@ export default function ChatPage() {
 
         if (apiContacts.length > 0) {
           setContacts(apiContacts);
-          if (activeChatId && apiContacts.some((c) => c.id === activeChatId)) {
-            setActiveChatId(activeChatId);
-          } else {
-            setActiveChatId(apiContacts[0].id);
-          }
+          setActiveChatId((currentId) =>
+            currentId && apiContacts.some((c) => c.id === currentId)
+              ? currentId
+              : apiContacts[0].id,
+          );
         }
       } catch {
         setError('No se pudieron cargar tus chats.');
@@ -124,7 +112,7 @@ export default function ChatPage() {
     if (token) {
       loadChats();
     }
-  }, [token, activeChatId]);
+  }, [token]);
 
   const displayContacts = tempContact
     ? [tempContact, ...contacts].filter(

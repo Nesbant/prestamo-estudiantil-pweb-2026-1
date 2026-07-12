@@ -33,6 +33,7 @@ export default function Profile() {
     }
 
     try {
+      setSaving(true);
       const updatedData = await updateUserService(
         {
           name: name.trim(),
@@ -45,6 +46,8 @@ export default function Profile() {
       setShowModal(true);
     } catch (error) {
       setError(error.message || 'No se pudo actualizar el perfil.');
+    } finally {
+      setSaving(false);
     }
   };
 

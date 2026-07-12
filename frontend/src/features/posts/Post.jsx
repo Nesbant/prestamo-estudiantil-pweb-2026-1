@@ -31,14 +31,22 @@ const Post = ({
   const isBuscando = post.status === 'requesting';
   const isPrestadoActualmente = post.status === 'lent';
 
-  const { badgeColor, statusText } = isPrestando
+  const requestStatus = post.loanStatus
+    ? post.loanStatus === 'pending'
+      ? { badgeColor: 'bg-amber-500 text-white', statusText: 'Solicitud pendiente' }
+      : post.loanStatus === 'rejected'
+        ? { badgeColor: 'bg-red-600 text-white', statusText: 'Solicitud rechazada' }
+        : { badgeColor: 'bg-gray-800 text-white', statusText: 'Artículo ya prestado' }
+    : null;
+
+  const { badgeColor, statusText } = requestStatus || (isPrestando
     ? { badgeColor: 'bg-[#00543D] text-white', statusText: 'Prestando' }
     : isBuscando
       ? { badgeColor: 'bg-blue-600 text-white', statusText: 'Buscando' }
       : {
           badgeColor: 'bg-gray-800 text-white',
           statusText: 'Prestado actualmente',
-        };
+        });
 
   const isDisabled = isPrestadoActualmente;
 

@@ -89,6 +89,7 @@ export default function Register() {
     }
 
     try {
+      setSubmitting(true);
       const authData = await registerUser({
         name,
         email,
@@ -104,6 +105,8 @@ export default function Register() {
       setShowModal(true);
     } catch (error) {
       setError(error.message || 'Ocurrió un error inesperado.');
+    } finally {
+      setSubmitting(false);
     }
   };
 

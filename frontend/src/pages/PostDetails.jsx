@@ -16,12 +16,12 @@ import {
   faStar as faStarRegular,
 } from '@fortawesome/free-regular-svg-icons';
 import { PostContext } from '../features/posts/PostContext';
-import { findBackendPostForChat } from '../features/posts/postService';
 import { useAuth } from '../features/auth/AuthContext';
 import Modal from '../components/ui/Modal';
 import {
   getPostById,
   toggleFavorite as toggleFavoriteApi,
+  requestLoan,
 } from '../features/posts/postService';
 import { findOrCreateChat } from '../features/chat/chatService';
 
@@ -66,7 +66,6 @@ export default function PostPage() {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [openingChat, setOpeningChat] = useState(false);
-  const [chatError, setChatError] = useState('');
 
   const post = postDetails || posts.find((p) => p.id === id);
   const author = post?.author || {};
@@ -110,66 +109,35 @@ export default function PostPage() {
     );
   }
 
-  const handleRequestConfirm = () => {
-    setPosts(
-      posts.map((p) => (p.id === post.id ? { ...p, status: 'lent' } : p)),
-    );
-    setShowRequestModal(false);
-    setShowSuccessModal(true);
-  };
-
-  const handleOfferConfirm = () => {
-    setPosts(
-      posts.map((p) => (p.id === post.id ? { ...p, status: 'lent' } : p)),
-    );
-    setShowOfferModal(false);
-    setShowSuccessModal(true);
-  };
-
-  const toggleFavorite = () => {
-    toggleFavoriteApi(post.id, token).catch(() => {
-      setError('No se pudo actualizar favoritos.');
-    });
-    setPostDetails((currentPost) =>
-      currentPost
-        ? { ...currentPost, isFavorite: !currentPost.isFavorite }
-        : currentPost,
-    );
-    setPosts(
-      posts.map((p) =>
-        p.id === post.id ? { ...p, isFavorite: !p.isFavorite } : p,
-      ),
-    );
-  };
-
-  const handleOpenChat = async () => {
-    if (openingChat) return;
-
-    setOpeningChat(true);
-    setChatError('');
-
+  const submitLoanRequest = async (closeModal) => {
     try {
-      const backendPost = await findBackendPostForChat(post);
+      setError('');
+      await requestLoan(post.id, token);
+      closeModal(false);
+      setShowSuccessModal(true);
+    } catch (requestError) {
+      setError(requestError.message || 'No se pudo enviar la solicitud.');
+      closeModal(false);
+    }
+  };
 
-      if (!backendPost) {
-        setChatError(
-          'Esta publicación todavía no existe en el backend. No se puede abrir el chat real.',
-        );
-        return;
-      }
+  const handleRequestConfirm = () => submitLoanRequest(setShowRequestModal);
+  const handleOfferConfirm = () => submitLoanRequest(setShowOfferModal);
 
-      navigate('/chat', {
-        state: {
-          startConversation: {
-            postId: backendPost.id,
-            otherUserId: backendPost.authorId,
-          },
-        },
-      });
-    } catch (error) {
-      setChatError(error.message);
-    } finally {
-      setOpeningChat(false);
+  const toggleFavorite = async () => {
+    try {
+      setError('');
+      const { isFavorite } = await toggleFavoriteApi(post.id, token);
+      setPostDetails((currentPost) =>
+        currentPost ? { ...currentPost, isFavorite } : currentPost,
+      );
+      setPosts((currentPosts) =>
+        currentPosts.map((item) =>
+          item.id === post.id ? { ...item, isFavorite } : item,
+        ),
+      );
+    } catch (favoriteError) {
+      setError(favoriteError.message || 'No se pudo actualizar favoritos.');
     }
   };
 
@@ -179,9 +147,18 @@ export default function PostPage() {
   const isMyPost = currentUser && currentUser.id === post.authorId;
 
   const openChat = async () => {
+    if (openingChat) return;
+
+    setOpeningChat(true);
+    setError('');
     try {
       if (post.authorId) {
-        const chat = await findOrCreateChat(post.authorId, token, post.title);
+        const chat = await findOrCreateChat(
+          post.authorId,
+          token,
+          post.title,
+          post.id,
+        );
         navigate('/chat', {
           state: {
             newContact: {
@@ -190,12 +167,15 @@ export default function PostPage() {
               name: authorName,
               avatar: authorAvatar,
               item: post.title,
+              postId: post.id,
             },
           },
         });
       }
     } catch {
       setError('No se pudo iniciar el chat.');
+    } finally {
+      setOpeningChat(false);
     }
   };
 
@@ -264,19 +244,21 @@ export default function PostPage() {
                   {post.category}
                 </span>
               </div>
-              <button
-                onClick={toggleFavorite}
-                className='text-2xl transition-colors cursor-pointer shrink-0'
-              >
-                <FontAwesomeIcon
-                  icon={post.isFavorite ? faStarSolid : faStarRegular}
-                  className={
-                    post.isFavorite
-                      ? 'text-yellow-400'
-                      : 'text-gray-300 hover:text-gray-400'
-                  }
-                />
-              </button>
+              {!isMyPost && (
+                <button
+                  onClick={toggleFavorite}
+                  className='text-2xl transition-colors cursor-pointer shrink-0'
+                >
+                  <FontAwesomeIcon
+                    icon={post.isFavorite ? faStarSolid : faStarRegular}
+                    className={
+                      post.isFavorite
+                        ? 'text-yellow-400'
+                        : 'text-gray-300 hover:text-gray-400'
+                    }
+                  />
+                </button>
+              )}
             </div>
 
             <h1 className='mb-4 text-3xl font-bold text-gray-900'>
@@ -326,12 +308,6 @@ export default function PostPage() {
             <GuaranteeBox />
 
                 <div className='flex flex-col gap-3'>
-                  {chatError && (
-                    <p className='rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700'>
-                      {chatError}
-                    </p>
-                  )}
-
                   {isMyPost ? (
                 <button
                   onClick={() => navigate(`/edit/${post.id}`)}
@@ -368,7 +344,8 @@ export default function PostPage() {
                   )}
                   <button
                     onClick={openChat}
-                    className='flex items-center justify-center w-full gap-2 py-3.5 font-semibold text-gray-700 transition-colors bg-white border border-gray-300 cursor-pointer rounded-xl hover:bg-gray-50'
+                    disabled={openingChat}
+                    className='flex items-center justify-center w-full gap-2 py-3.5 font-semibold text-gray-700 transition-colors bg-white border border-gray-300 cursor-pointer rounded-xl hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60'
                   >
                     <FontAwesomeIcon icon={faCommentDots} />{' '}
                     {openingChat ? 'Abriendo chat...' : 'Enviar mensaje'}

@@ -45,6 +45,12 @@ export default function ExplorePage() {
   };
 
   useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setSearchParams({ page: totalPages }, { replace: true });
+    }
+  }, [currentPage, totalPages, setSearchParams]);
+
+  useEffect(() => {
     if (isMounted.current) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {

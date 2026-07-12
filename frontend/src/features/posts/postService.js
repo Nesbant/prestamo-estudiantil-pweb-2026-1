@@ -31,6 +31,20 @@ export async function getMyPosts(token) {
   return handleResponse(response);
 }
 
+export async function getFavoritePosts(token) {
+  const response = await fetch(`${API_URL}/favorites`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
+export async function getMyRequests(token) {
+  const response = await fetch(`${API_URL}/requests`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
+
 export async function getPostById(id, token) {
   const response = await fetch(`${API_URL}/${id}`, {
     headers: authHeaders(token),
@@ -81,6 +95,18 @@ export async function toggleFavorite(id, token) {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  });
+  return handleResponse(response);
+}
+
+export async function requestLoan(id, token) {
+  const response = await fetch(`${API_URL}/${id}/loan-requests`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({}),
   });
   return handleResponse(response);
 }

@@ -27,10 +27,13 @@ export default function Login() {
     }
 
     try {
+      setSubmitting(true);
       const authData = await loginUser({ email, password });
       handleLogin(authData);
     } catch (error) {
       setError(error.message || 'Ocurrió un error inesperado.');
+    } finally {
+      setSubmitting(false);
     }
   };
 

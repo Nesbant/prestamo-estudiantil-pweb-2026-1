@@ -24,11 +24,11 @@ export async function getChats(token) {
   return handleResponse(response);
 }
 
-export async function findOrCreateChat(recipientId, token, reference) {
+export async function findOrCreateChat(recipientId, token, reference, postId) {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-    body: JSON.stringify({ recipientId, reference }),
+    body: JSON.stringify({ recipientId, reference, postId }),
   });
   return handleResponse(response);
 }
