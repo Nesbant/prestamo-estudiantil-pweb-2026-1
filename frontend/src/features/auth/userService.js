@@ -1,106 +1,56 @@
-const USERS_KEY = 'users';
-const CURRENT_USER_KEY = 'currentUser';
+const API_URL = 'http://localhost:4000/api/auth';
 
-export const getUsers = async () => {
-  const savedUsers = localStorage.getItem(USERS_KEY);
-  return savedUsers ? JSON.parse(savedUsers) : [];
-};
-
-export const saveUsers = async (users) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
-
-export const registerUser = async (userData) => {
-  const users = await getUsers();
-
-  const cleanEmail = userData.email.trim().toLowerCase();
-
-  const emailExists = users.some(
-    (user) => user.email.toLowerCase() === cleanEmail,
-  );
-
-  if (emailExists) {
-    return {
-      ok: false,
-      message: 'Este correo ya se encuentra registrado',
-    };
+async function handleResponse(response) {
+  const data = await response.json();
+  if (!response.ok) {
+    // Propagamos el mensaje y el código de error del backend
+    const error = new Error(
+      data.message || 'Ocurrió un error en la solicitud.',
+    );
+    error.code = data.code;
+    throw error;
   }
+  // El backend devuelve el objeto de respuesta en una propiedad 'data'
+  return data.data;
+}
 
-  const newUser = {
-    id: Date.now(),
-    name: userData.name.trim(),
-    email: cleanEmail,
-    password: userData.password,
-    phone: '',
-  };
-
-  const newList = [...users, newUser];
-  await saveUsers(newList);
-
-  return {
-    ok: true,
-    message: 'Usuario registrado correctamente',
-  };
-};
-
-export const loginUser = async (email, password) => {
-  const users = await getUsers();
-  const cleanEmail = email.trim().toLowerCase();
-
-  const foundUser = users.find(
-    (user) =>
-      user.email.toLowerCase() === cleanEmail && user.password === password,
-  );
-
-  if (!foundUser) {
-    return {
-      ok: false,
-      message: 'Correo o contraseña incorrectos',
-    };
-  }
-
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(foundUser));
-
-  return {
-    ok: true,
-    user: foundUser,
-  };
-};
-
-export const getCurrentUser = async () => {
-  const savedUser = localStorage.getItem(CURRENT_USER_KEY);
-  return savedUser ? JSON.parse(savedUser) : null;
-};
-
-export const updateCurrentUser = async (updatedData) => {
-  const users = await getUsers();
-  const currentUser = await getCurrentUser();
-
-  if (!currentUser) {
-    return null;
-  }
-
-  const updatedUsers = users.map((user) => {
-    if (user.id === currentUser.id) {
-      return {
-        ...user,
-        ...updatedData,
-      };
-    }
-    return user;
+export async function registerUser(userData) {
+  const response = await fetch(`${API_URL}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData),
   });
+  return handleResponse(response);
+}
 
-  const updatedUser = {
-    ...currentUser,
-    ...updatedData,
-  };
+export async function loginUser(credentials) {
+  const response = await fetch(`${API_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  });
+  return handleResponse(response);
+}
 
-  await saveUsers(updatedUsers);
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+export async function getProfile(token) {
+  const response = await fetch(`${API_URL}/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return handleResponse(response);
+}
 
-  return updatedUser;
-};
+export async function updateUser(profileData, token) {
+  const response = await fetch(`${API_URL}/me`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: profileData,
+  });
+  return handleResponse(response);
+}
 
-export const logoutUser = async () => {
-  localStorage.removeItem(CURRENT_USER_KEY);
-};
+export async function getInstitutions() {
+  const response = await fetch('http://localhost:4000/api/institutions');
+  return handleResponse(response);
+}

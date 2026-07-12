@@ -57,53 +57,33 @@ export default function PostForm() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImageUrl(reader.result); // Guarda la imagen en formato DataURL
+        setImageUrl(reader.result);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const finalImageUrl =
       imageUrl ||
       `https://placehold.co/200x200?text=${encodeURIComponent(category || 'Articulo')}`;
 
+    const postData = {
+      type: type, // 'lend' o 'request'
+      category: category || 'Otros',
+      title: title || 'Sin título',
+      description: description || 'Sin descripción',
+      loanDuration: loanDuration || 'A coordinar',
+      pickupLocation: pickupLocation || 'A coordinar',
+      imageUrl: finalImageUrl,
+    };
+
     if (isEditing) {
-      const existingPost = posts.find((p) => p.id === Number(id));
-      const updatedPost = {
-        ...existingPost,
-        status: type === 'lend' ? 'lending' : 'requesting',
-        category: category || 'Otros',
-        title: title || 'Sin título',
-        description: description || 'Sin descripción',
-        loanDuration: loanDuration || 'A coordinar',
-        pickupLocation: pickupLocation || 'A coordinar',
-        imageUrl: finalImageUrl,
-      };
-      handleUpdatePost(updatedPost);
+      // El 'type' se maneja en el backend, aquí solo pasamos los datos
+      const updatedPost = await handleUpdatePost(Number(id), postData);
       setCreatedPost(updatedPost);
     } else {
-      const newPost = {
-        id: Date.now(),
-        status: type === 'lend' ? 'lending' : 'requesting',
-        category: category || 'Otros',
-        title: title || 'Sin título',
-        description: description || 'Sin descripción',
-        loanDuration: loanDuration || 'A coordinar',
-        pickupLocation: pickupLocation || 'A coordinar',
-        imageUrl: finalImageUrl,
-        views: 0,
-        isFavorite: false,
-        timeAgo: 'hace un momento',
-        authorId: currentUser?.id,
-        authorName: currentUser?.name || 'Usuario Anónimo',
-        authorAvatar:
-          currentUser?.avatar ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'U')}&background=00543D&color=fff`,
-        rating: 5.0,
-        completedLoans: 0,
-      };
-      handleAddPost(newPost);
+      const newPost = await handleAddPost(postData);
       setCreatedPost(newPost);
     }
     setIsSuccess(true);

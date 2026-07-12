@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../../components/ui/Modal';
-import { registerUser } from './userService';
+import { registerUser, getInstitutions } from './userService';
 import { useAuth } from './AuthContext';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
-import { INSTITUTIONS_DATA, INSTITUTIONS } from '../../components/ui/institutions';
 
 export default function Register() {
-  const { setAuthView } = useAuth();
+  const { setAuthView, handleLogin } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [institution, setInstitution] = useState('');
@@ -20,6 +19,39 @@ export default function Register() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+
+  const [institutionsData, setInstitutionsData] = useState([]);
+  const [loadingInstitutions, setLoadingInstitutions] = useState(true);
+
+  useEffect(() => {
+    async function fetchInstitutions() {
+      try {
+        const data = await getInstitutions();
+        setInstitutionsData(data);
+      } catch (err) {
+        setError('No se pudieron cargar las instituciones.');
+        console.error(err);
+      } finally {
+        setLoadingInstitutions(false);
+      }
+    }
+    fetchInstitutions();
+  }, []);
+
+  // Derivamos las listas para los selects a partir de los datos del estado
+  const institutionList = institutionsData.map((inst) => inst.name);
+  const selectedInstitutionData = institutionsData.find(
+    (inst) => inst.name === institution,
+  );
+  const campusList = selectedInstitutionData
+    ? selectedInstitutionData.campuses.map((c) => c.name)
+    : [];
+  const selectedCampusData = selectedInstitutionData?.campuses.find(
+    (c) => c.name === campus,
+  );
+  const majorList = selectedCampusData
+    ? selectedCampusData.majors.map((m) => m.name)
+    : [];
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -55,28 +87,28 @@ export default function Register() {
       return;
     }
 
-    const result = await registerUser({
-      name,
-      email,
-      institution,
-      studentId,
-      phone,
-      major,
-      campus,
-      password,
-    });
-
-    if (!result.ok) {
-      setError(result.message);
-      return;
+    try {
+      const authData = await registerUser({
+        name,
+        email,
+        institution,
+        studentId,
+        phone,
+        major,
+        campus,
+        password,
+      });
+      // Opcional: Iniciar sesión automáticamente tras el registro
+      handleLogin(authData);
+      setShowModal(true);
+    } catch (error) {
+      setError(error.message || 'Ocurrió un error inesperado.');
     }
-
-    setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
-    setAuthView('login');
+    // Como ya iniciamos sesión, no es necesario cambiar de vista
   };
 
   return (
@@ -110,7 +142,8 @@ export default function Register() {
             setCampus(''); // Resetear sede al cambiar institución
             setMajor(''); // Resetear carrera al cambiar institución
           }}
-          options={INSTITUTIONS}
+          options={institutionList}
+          disabled={loadingInstitutions}
           placeholder='Selecciona tu institución...'
         />
 
@@ -138,25 +171,21 @@ export default function Register() {
               setCampus(e.target.value);
               setMajor(''); // Resetear carrera al cambiar sede
             }}
-            disabled={!institution}
+            disabled={!institution || loadingInstitutions}
             placeholder={
-              !institution
-                ? 'Elige institución primero'
-                : 'Selecciona tu sede...'
+              !institution ? 'Elige institución' : 'Selecciona tu sede...'
             }
-            options={
-              institution ? Object.keys(INSTITUTIONS_DATA[institution]) : []
-            }
+            options={campusList}
           />
           <Select
             label='Carrera / Facultad'
             value={major}
             onChange={(e) => setMajor(e.target.value)}
-            disabled={!campus}
+            disabled={!campus || loadingInstitutions}
             placeholder={
               !campus ? 'Elige sede primero' : 'Selecciona tu carrera...'
             }
-            options={campus ? INSTITUTIONS_DATA[institution][campus] : []}
+            options={majorList}
           />
         </div>
 

@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import Modal from '../../components/ui/Modal';
-import { updateCurrentUser } from '../auth/userService';
+import { updateUser as updateUserService } from '../auth/userService';
 import { useAuth } from '../auth/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faImage } from '@fortawesome/free-solid-svg-icons';
 import Input from '../../components/ui/Input';
 
 export default function Profile() {
-  const { currentUser, updateUser } = useAuth();
+  const { currentUser, token, updateUser } = useAuth();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null); // Para guardar el archivo
   const [avatar, setAvatar] = useState('');
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -31,22 +32,29 @@ export default function Profile() {
       return;
     }
 
-    const updatedUserObj = await updateCurrentUser({
-      name: name.trim(),
-      phone: phone.trim(),
-      avatar: avatar.trim(),
-    });
+    const formData = new FormData();
+    formData.append('name', name.trim());
+    formData.append('phone', phone.trim());
+    if (avatarFile) {
+      formData.append('avatar', avatarFile);
+    }
 
-    updateUser(updatedUserObj);
-    setShowModal(true);
+    try {
+      const updatedData = await updateUserService(formData, token);
+      updateUser(updatedData);
+      setShowModal(true);
+    } catch (error) {
+      setError(error.message || 'No se pudo actualizar el perfil.');
+    }
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setAvatarFile(file); // Guardamos el archivo
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatar(reader.result); // Guarda la imagen en formato DataURL
+        setAvatar(reader.result); // Mostramos la vista previa
       };
       reader.readAsDataURL(file);
     }
